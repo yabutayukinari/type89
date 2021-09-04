@@ -16,3 +16,6 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', function () {
     return view('welcome');
 });
+
+
+Route::resource('user', App\Http\Controllers\Admin\UserController::class)->only('index', 'show');
