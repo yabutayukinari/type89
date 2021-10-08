@@ -38,4 +38,8 @@ jobs:
         env:
           DB_CONNECTION: sqlite
           DB_DATABASE: database/database.sqlite
-        run: vendor/bin/phpunit
+        run: vendor/bin/phpunit --coverage-html "/tmp/build/coverage" tests
+     - uses: actions/upload-artifact@v2
+     with:
+       name: my-artifact
+       path: path/to/artifact/

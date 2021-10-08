@@ -65,7 +65,7 @@
             "./vendor/bin/phpmd . text phpmd.xml"
         ],
         "test": [
-            "vendor/bin/phpunit"
+            "vendor/bin/phpunit  --coverage-html \"/tmp/build/coverage\""
         ],
         "tests": [
             "@cs",
