@@ -38,7 +38,7 @@ jobs:
         env:
           DB_CONNECTION: sqlite
           DB_DATABASE: database/database.sqlite
-        run: vendor/bin/phpunit --coverage-html "/tmp/build/coverage" tests
+        run: vendor/bin/phpunit --log-junit "/tmp/phpunit/junit.xml" --coverage-html "/tmp/build/coverage"
      - uses: actions/upload-artifact@v2
        with:
          name: my-artifact
