@@ -23,6 +23,7 @@
         "mockery/mockery": "^1.4.2",
         "nunomaduro/collision": "^5.0",
         "nunomaduro/larastan": "^0.7.12",
+        "phpmd/phpmd": "^2.10",
         "phpunit/phpunit": "^9.3.3"
     },
     "autoload": {
@@ -50,6 +51,32 @@
         ],
         "post-create-project-cmd": [
             "@php artisan key:generate --ansi"
+        ],
+        "cs": [
+            "./vendor/bin/php-cs-fixer fix -v --dry-run"
+        ],
+        "cs-fix": [
+            "./vendor/bin/php-cs-fixer fix -v"
+        ],
+        "sa": [
+            "./vendor/bin/phpstan analyse"
+        ],
+        "md": [
+            "./vendor/bin/phpmd . text phpmd.xml"
+        ],
+        "test": [
+            "vendor/bin/phpunit"
+        ],
+        "tests": [
+            "@cs",
+            "@sa",
+            "@md",
+            "@test"
+        ],
+        "build": [
+            "@cs",
+            "@sa",
+            "@md"
         ]
     },
     "extra": {

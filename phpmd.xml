@@ -1,0 +1,77 @@
+<?xml version="1.0"?>
+<ruleset
+  name="Custom PHPMD rule set"
+  xmlns="http://pmd.sf.net/ruleset/1.0.0"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://pmd.sf.net/ruleset/1.0.0 http://pmd.sf.net/ruleset_xml_schema.xsd"
+  xsi:noNamespaceSchemaLocation="http://pmd.sf.net/ruleset_xml_schema.xsd"
+>
+  <rule ref="rulesets/codesize.xml">
+    <exclude name="TooManyMethods" />
+    <exclude name="TooManyPublicMethods" />
+  </rule>
+  <rule ref="rulesets/controversial.xml" />
+  <rule ref="rulesets/design.xml">
+    <exclude name="NumberOfChildren" />
+    <exclude name="CouplingBetweenObjects" />
+  </rule>
+  <rule ref="rulesets/naming.xml">
+    <exclude name="ShortVariable" />
+    <exclude name="ShortMethodName" />
+  </rule>
+  <rule ref="rulesets/codesize.xml/TooManyMethods">
+    <properties>
+      <property name="ignorepattern" value="(^(set|get|scope))i" />
+    </properties>
+  </rule>
+  <rule ref="rulesets/codesize.xml/TooManyPublicMethods">
+    <priority>1</priority>
+    <properties>
+      <property name="maxmethods" value="40" />
+      <property name="ignorepattern" value="(^(set|get|scope))i" />
+    </properties>
+  </rule>
+  <rule ref="rulesets/naming.xml/ShortVariable">
+    <priority>1</priority>
+    <properties>
+      <property name="minimum" value="2" />
+    </properties>
+  </rule>
+  <rule ref="rulesets/naming.xml/ShortMethodName">
+    <priority>1</priority>
+    <properties>
+      <property name="minimum" value="2" />
+    </properties>
+  </rule>
+  <rule ref="rulesets/design.xml/NumberOfChildren">
+    <priority>1</priority>
+    <properties>
+      <property name="minimum" value="100" />
+    </properties>
+  </rule>
+  <rule ref="rulesets/design.xml/CouplingBetweenObjects">
+    <priority>1</priority>
+    <properties>
+      <property name="maximum" value="25" />
+    </properties>
+  </rule>
+  <rule ref="rulesets/unusedcode.xml" />
+  <!-- <exclude-pattern>*.blade.php</exclude-pattern> -->
+  <exclude-pattern>_ide_helper.php</exclude-pattern>
+  <exclude-pattern>*.twig.php</exclude-pattern>
+  <exclude-pattern>bootstrap/</exclude-pattern>
+  <exclude-pattern>node_modules/</exclude-pattern>
+  <exclude-pattern>public/build/</exclude-pattern>
+  <exclude-pattern>public/css/</exclude-pattern>
+  <exclude-pattern>public/fonts/</exclude-pattern>
+  <exclude-pattern>public/js/</exclude-pattern>
+  <exclude-pattern>public/vendor/</exclude-pattern>
+  <exclude-pattern>resources/assets/</exclude-pattern>
+  <exclude-pattern>resources/views/</exclude-pattern>
+  <exclude-pattern>storage/</exclude-pattern>
+  <exclude-pattern>vendor/</exclude-pattern>
+  <exclude-pattern>patch/</exclude-pattern>
+  <exclude-pattern>database/migrations/</exclude-pattern>
+  <exclude-pattern>app/Exceptions/Handler.php</exclude-pattern>
+  <exclude-pattern>app/Console/Kernel.php</exclude-pattern>
+</ruleset>

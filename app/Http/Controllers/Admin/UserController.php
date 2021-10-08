@@ -10,10 +10,9 @@ use Illuminate\View\View;
 class UserController extends Controller
 {
     /**
-     * @param Request $request
      * @return View
      */
-    public function index(Request $request)
+    public function index()
     {
         $users = User::paginate(10);
 
@@ -23,11 +22,10 @@ class UserController extends Controller
 
 
     /**
-     * @param Request $request
      * @param User $user
      * @return View
      */
-    public function show(Request $request, User $user)
+    public function show(User $user)
     {
         return view('admin.user.show', compact('user'));
     }

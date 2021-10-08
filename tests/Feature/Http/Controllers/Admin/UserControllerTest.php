@@ -16,9 +16,9 @@ class UserControllerTest extends TestCase
     /**
      * ユーザー一覧表示テスト
      */
-    public function testIndex_Viewが表示されていること(): void
+    public function testIndex(): void
     {
-        $users = User::factory()->count(3)->create();
+        $use = User::factory()->count(3)->create();
 
         $response = $this->get(route('user.index'));
 
@@ -29,9 +29,9 @@ class UserControllerTest extends TestCase
 
 
     /**
-     *
+     * ユーザー詳細表示テスト
      */
-    public function testShow_displays_view(): void
+    public function testShow(): void
     {
         $user = User::factory()->create();
 

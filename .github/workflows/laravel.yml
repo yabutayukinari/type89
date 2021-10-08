@@ -28,12 +28,14 @@ jobs:
         run: |
           mkdir -p database
           touch database/database.sqlite
+      - name: Execute PHP CS Fixer check
+        run: ./vendor/bin/php-cs-fixer fix -v --diff --dry-run
+      - name: Execute larastan
+        run: ./vendor/bin/phpstan analyse
+      - name: Execute phpmd
+        run: ./vendor/bin/phpmd . text phpmd.xml
       - name: Execute tests (Unit and Feature tests) via PHPUnit
         env:
           DB_CONNECTION: sqlite
           DB_DATABASE: database/database.sqlite
         run: vendor/bin/phpunit
-      - name: Execute PHP CS Fixer check
-        run: ./vendor/bin/php-cs-fixer fix -v --diff --dry-run
-      - name: Execute larastan
-        run: ./vendor/bin/phpstan analyse
