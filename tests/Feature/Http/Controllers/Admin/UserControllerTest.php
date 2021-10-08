@@ -23,7 +23,7 @@ class UserControllerTest extends TestCase
         $response = $this->get(route('user.index'));
 
         $response->assertOk();
-        $response->assertViewIs('user.index');
+        $response->assertViewIs('admin.user.index');
         $response->assertViewHas('users');
     }
 
@@ -38,7 +38,7 @@ class UserControllerTest extends TestCase
         $response = $this->get(route('user.show', $user));
 
         $response->assertOk();
-        $response->assertViewIs('user.show');
+        $response->assertViewIs('admin.user.show');
         $response->assertViewHas('user');
     }
 }
