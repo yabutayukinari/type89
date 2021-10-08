@@ -5,12 +5,13 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\View\View;
 
 class UserController extends Controller
 {
     /**
      * @param Request $request
-     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Contracts\View\Factory|\Illuminate\Contracts\View\View
+     * @return View
      */
     public function index(Request $request)
     {
@@ -19,10 +20,12 @@ class UserController extends Controller
         return view('admin.user.index', compact('users'));
     }
 
+
+
     /**
-     * @param \Illuminate\Http\Request $request
-     * @param \App\Models\User $user
-     * @return \Illuminate\Http\Response
+     * @param Request $request
+     * @param User $user
+     * @return View
      */
     public function show(Request $request, User $user)
     {
