@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Tests\Feature\Http\Controllers\Admin;
 
@@ -14,9 +14,9 @@ class UserControllerTest extends TestCase
     use RefreshDatabase;
 
     /**
-     * @test
+     * ユーザー一覧表示テスト
      */
-    public function index_displays_view()
+    public function testIndex_Viewが表示されていること()
     {
         $users = User::factory()->count(3)->create();
 
@@ -29,9 +29,9 @@ class UserControllerTest extends TestCase
 
 
     /**
-     * @test
+     *
      */
-    public function show_displays_view()
+    public function testShow_displays_view()
     {
         $user = User::factory()->create();
 
