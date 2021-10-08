@@ -38,8 +38,9 @@ jobs:
         env:
           DB_CONNECTION: sqlite
           DB_DATABASE: database/database.sqlite
-        run: ./vendor/bin/phpunit --coverage-html ./coverage/
-      - uses: actions/upload-artifact@v2
+        run: ./vendor/bin/phpunit --coverage-html storage/logs/coverage-report
+      - name: Archive code coverage results
+        uses: actions/upload-artifact@v2
         with:
-          name: my-artifact
-          path: path/to/artifact/
+          name: code-coverage-report
+          path: storage/logs/coverage-report
