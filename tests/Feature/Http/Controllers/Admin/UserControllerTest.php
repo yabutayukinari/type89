@@ -1,7 +1,6 @@
 <?php declare(strict_types=1);
 
 namespace Tests\Feature\Http\Controllers\Admin;
-
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -16,9 +15,8 @@ class UserControllerTest extends TestCase
     /**
      * ユーザー一覧表示テスト
      */
-    public function testIndex(): void
-    {
-        $use = User::factory()->count(3)->create();
+    public function testIndex(): void{
+        User::factory()->count(3)->create();
 
         $response = $this->get(route('user.index'));
 
