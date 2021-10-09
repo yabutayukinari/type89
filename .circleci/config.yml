@@ -50,8 +50,10 @@ jobs:
       - run: touch storage/testing.sqlite
       - run: php artisan migrate --env=testing --database=mysql --force
       - run: ./vendor/bin/php-cs-fixer fix -v --diff --dry-run
+      - run: ./vendor/bin/phpcs --standard=phpcs.xml ./
       - run: ./vendor/bin/phpstan analyse --memory-limit=2G
       - run: ./vendor/bin/phpmd . text phpmd.xml
+      - run: ./vendor/bin/psalm
       - run: phpdbg -qrr ./vendor/bin/phpunit --coverage-html /tmp/build/coverage
       - store_artifacts:
           path: /tmp/build

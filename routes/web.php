@@ -18,4 +18,4 @@ Route::get('/', function () {
 });
 
 
-Route::resource('user', App\Http\Controllers\Admin\UserController::class)->only('index', 'show');
+Route::resource('user', App\Http\Controllers\Admin\UserController::class)->only(['index', 'show']);
