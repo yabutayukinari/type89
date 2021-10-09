@@ -1,0 +1,64 @@
+# PHP CircleCI 2.0 configuration file
+#
+# Check https://circleci.com/docs/2.0/language-php/ for more details
+#
+version: 2
+jobs:
+  test:
+    docker:
+      # Specify the version you desire here
+      - image: circleci/php:8.0.1-apache-buster
+
+      # Specify service dependencies here if necessary
+      # CircleCI maintains a library of pre-built images
+      # documented at https://circleci.com/docs/2.0/circleci-images/
+      # Using the RAM variation mitigates I/O contention
+      # for database intensive operations.
+      # - image: circleci/mysql:5.7-ram
+      # - image: redis:3
+      - image: circleci/mysql:5.7
+        environment:
+          MYSQL_ALLOW_EMPTY_PASSWORD: yes
+          MYSQL_USER: sail
+          MYSQL_DATABASE: type_89
+          MYSQL_PASSWORD: 'password'
+          MYSQL_HOST: 127.0.0.1
+
+    steps:
+      - checkout
+      - run:
+          name: Install MySQL driver
+          command: |
+            sudo docker-php-ext-configure pdo_mysql --with-pdo-mysql=mysqlnd
+            sudo docker-php-ext-install zip bcmath pdo_mysql
+
+      # composer cache
+      - restore_cache:
+          keys:
+            # "composer.json" can be used if "composer.json"
+            # is not committed to the repository.
+            - composer-v1-{{ checksum "composer.lock" }}
+            # fallback to using the latest cache if no exact match is found
+            - composer-v1-
+      - run: composer install -n --prefer-dist
+      - save_cache:
+          key: composer-v1-{{ checksum "composer.lock" }}
+          paths:
+            - vendor
+
+      # prepare the database
+      - run: touch storage/testing.sqlite
+      - run: php artisan migrate --env=testing --database=mysql --force
+      - run: ./vendor/bin/php-cs-fixer fix -v --diff --dry-run
+      - run: ./vendor/bin/phpstan analyse --memory-limit=2G
+      - run: ./vendor/bin/phpmd . text phpmd.xml
+      - run: phpdbg -qrr ./vendor/bin/phpunit --coverage-html /tmp/build/coverage
+      - store_artifacts:
+          path: /tmp/build
+          destination: build
+
+workflows:
+  version: 2
+  workflow:
+    jobs:
+      - test
