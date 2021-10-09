@@ -13,7 +13,7 @@ class Admin extends Model
     /**
      * The attributes that are mass assignable.
      *
-     * @var array
+     * @var array<array-key, string>
      */
     protected $fillable = [
         'name',

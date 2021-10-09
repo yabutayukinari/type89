@@ -16,7 +16,8 @@ class UserControllerTest extends TestCase
     /**
      * ユーザー一覧表示テスト
      */
-    public function testIndex(): void{
+    public function testIndex(): void
+    {
         User::factory()->count(3)->create();
 
         $response = $this->get(route('user.index'));
