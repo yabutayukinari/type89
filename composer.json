@@ -74,9 +74,6 @@
         "md": [
             "./vendor/bin/phpmd . text phpmd.xml"
         ],
-        "ps": [
-            "vendor/bin/psalm"
-        ],
         "test": [
             "./vendor/bin/phpunit"
         ],
@@ -85,15 +82,13 @@
             "@cs",
             "@sa",
             "@md",
-            "@ps",
             "@test"
         ],
         "build": [
-            "csf",
+            "@csf",
             "@cs",
             "@sa",
-            "@md",
-            "@ps"
+            "@md"
         ]
     },
     "extra": {
