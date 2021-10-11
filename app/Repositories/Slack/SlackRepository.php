@@ -8,8 +8,6 @@ class SlackRepository implements SlackRepositoryInterface
 {
     use Notifiable;
 
-    protected $slack;
-
     /**
      * @return string
      */

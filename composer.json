@@ -25,6 +25,7 @@
         "nunomaduro/collision": "^5.0",
         "nunomaduro/larastan": "^0.7.12",
         "phpmd/phpmd": "^2.10",
+        "phpstan/phpstan-mockery": "^0.12.14",
         "phpunit/phpunit": "^9.3.3",
         "psalm/plugin-laravel": "^1.5",
         "psalm/plugin-phpunit": "^0.16.1",
