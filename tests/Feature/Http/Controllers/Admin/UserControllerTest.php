@@ -3,7 +3,10 @@
 namespace Tests\Feature\Http\Controllers\Admin;
 
 use App\Models\User;
+use App\Repositories\Slack\SlackRepository;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Str;
 use Tests\TestCase;
 
@@ -48,6 +51,11 @@ class UserControllerTest extends TestCase
      */
     public function testUpdate(): void
     {
+        Event::fake();
+        $this->mock(SlackRepository::class, function (SlackRepository $mock) {
+            $mock->shouldReceive('notify')->once();
+        });
+
         $user = User::factory()->create();
         $response = $this->post(route('admin_user_update', $user), [
             'nickname' => 'テストユーザー', 'email' => 'test@exsample.com'

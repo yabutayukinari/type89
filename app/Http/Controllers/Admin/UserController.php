@@ -2,11 +2,15 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Events\AdminUserUpdate;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\UserUpdateRequest;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
+use App\Repositories\Slack\SlackRepository as SlackPepo;
+use App\Notifications\UpdateUserSlack;
 
 class UserController extends Controller
 {
@@ -30,14 +34,21 @@ class UserController extends Controller
     }
 
     /**
+     * ユーザー更新
+     *
+     * @param SlackPepo $slackHook
      * @param UserUpdateRequest $request
      * @param User $user
      * @return RedirectResponse
      */
-    public function update(UserUpdateRequest $request, User $user): RedirectResponse
+    public function update(SlackPepo $slackHook, UserUpdateRequest $request, User $user): RedirectResponse
     {
+        Log::info("".__LINE__);
         $user->update($request->only(['nickname', 'email']));
-
+        Log::info("".__LINE__);
+        AdminUserUpdate::dispatch($user);
+        $slackHook->notify(new UpdateUserSlack());
+        Log::info("".__LINE__);
         return back()->with('status', 'Profile updated!');
     }
 }
