@@ -18,7 +18,13 @@ class UserUpdateService
         $this->slack = $slack;
     }
 
-    public function execute(User $user, array $params)
+    /**
+     * ユーザー更新処理
+     *
+     * @param User $user
+     * @param array $params
+     */
+    public function execute(User $user, array $params): void
     {
         $user->update($params);
         AdminUserUpdate::dispatch($user);
