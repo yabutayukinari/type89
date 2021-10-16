@@ -10,6 +10,7 @@
         "guzzlehttp/guzzle": "^7.0.1",
         "laravel/framework": "^8.54",
         "laravel/sanctum": "^2.11",
+        "laravel/slack-notification-channel": "^2.3",
         "laravel/tinker": "^2.5",
         "laravel/ui": "^3.3"
     },
@@ -24,6 +25,7 @@
         "nunomaduro/collision": "^5.0",
         "nunomaduro/larastan": "^0.7.12",
         "phpmd/phpmd": "^2.10",
+        "phpstan/phpstan-mockery": "^0.12.14",
         "phpunit/phpunit": "^9.3.3",
         "psalm/plugin-laravel": "^1.5",
         "psalm/plugin-phpunit": "^0.16.1",

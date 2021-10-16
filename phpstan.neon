@@ -10,6 +10,12 @@ parameters:
     # The level 8 is the highest level
     level: 8
 
+    # mock系のメソッドのエラーを潰す、対応方法が不明larastanの対応漏れ？
+    ignoreErrors:
+            -
+                message: '#Call to an undefined method .*#'
+                path: tests/*
+
     excludePaths:
         - ./*/*/FileToBeExcluded.php
 
