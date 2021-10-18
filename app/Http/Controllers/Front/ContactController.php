@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace App\Http\Controllers\Front;
 
@@ -14,10 +14,6 @@ use Illuminate\View\View;
  */
 class ContactController
 {
-    public function __construct()
-    {
-    }
-
     /**
      * 入力画面
      */
@@ -45,10 +41,10 @@ class ContactController
     public function returnInput(): RedirectResponse
     {
         $inputs = [
-          'name' => Session::pull('name'),
-          'name_kana' => Session::pull('name_kana'),
-          'email' => Session::pull('email'),
-          'contact_body' => Session::pull('contact_body')
+            'name' => Session::pull('name'),
+            'name_kana' => Session::pull('name_kana'),
+            'email' => Session::pull('email'),
+            'contact_body' => Session::pull('contact_body')
         ];
         return redirect()->route('contact_input')->withInput($inputs);
     }
@@ -68,5 +64,4 @@ class ContactController
         $request->session()->regenerateToken();
         return view('front.contact.complete');
     }
-
 }
