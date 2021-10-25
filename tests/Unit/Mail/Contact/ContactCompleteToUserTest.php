@@ -24,8 +24,8 @@ class ContactCompleteToUserTest extends TestCase
         // 検証
         $this->assertSame([
             [
-                'address' => $contact->email,
-                'name' => $contact->name
+                'name' => $contact->name,
+                'address' => $contact->email
             ]
         ], $message->to);
     }
