@@ -25,7 +25,7 @@ class ContactFactory extends Factory
             'name' => $this->faker->name,
             'name_kana' => $this->faker->name,
             'email' => $this->faker->safeEmail,
-            'body' => $this->faker->realText('1000'),
+            'body' => $this->faker->paragraph(),
         ];
     }
 }
