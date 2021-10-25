@@ -28,7 +28,17 @@ class ContactRequest extends FormRequest
             'name' => 'required|max:100',
             'name_kana' => 'required|max:200',
             'email' => 'required|email:rfc|max:100',
-            'contact_body' => 'required|max:65535'
+            'body' => 'required|max:65535'
+        ];
+    }
+
+    /**
+     * @return array
+     */
+    public function attributes()
+    {
+        return [
+            'body' => 'お問い合わせ内容'
         ];
     }
 }

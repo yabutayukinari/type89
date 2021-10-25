@@ -4,7 +4,7 @@
 @endsection
 @section('content')
     <div class="col-6 offset-3">
-        <form method="post" action="{{ route('contact_confirm') }}">
+        <form method="post" action="{{ route('contact_complete') }}">
             @csrf
             <div class="mb-3 input-group @error('name') has-validation @enderror">
                 <input type="text"
@@ -43,20 +43,20 @@
                 </div>
                 @enderror
             </div>
-            <div class="mb-4 input-group @error('contact_body') has-validation @enderror">
+            <div class="mb-4 input-group @error('body') has-validation @enderror">
                 <textarea
-                    class="form-control @error('contact_body') is-invalid @enderror"
-                    name="contact_body"
+                    class="form-control @error('body') is-invalid @enderror"
+                    name="body"
                     aria-describedby="validationContactBodyFeedback"
-                    rows="5" placeholder="お問い合わせ内容(必須)">{!! old('contact_body') !!}</textarea>
-                @error('contact_body')
+                    rows="5" placeholder="お問い合わせ内容(必須)">{!! old('body') !!}</textarea>
+                @error('body')
                 <div id="validationContactBodyFeedback" class="invalid-feedback">
                     {{ $message }}
                 </div>
                 @enderror
             </div>
             <div class="text-center pt-4 col-md-6 offset-md-3">
-                <button type="submit" class="btn btn-primary">確認</button>
+                <button type="submit" class="btn btn-primary">送信</button>
             </div>
         </form>
     </div>

@@ -13,9 +13,9 @@ use Illuminate\Support\Facades\Route;
 | contains the "web" middleware group. Now create something great!
 |
 */
+Route::view('/', 'front.index')->name('home');
+
 Route::group(['prefix' => 'contact'], function () {
-    Route::get('input', [ContactController::class, 'input'])->name('contact_input');
-    Route::get('return', [ContactController::class, 'returnInput'])->name('contact_return');
-    Route::post('confirm', [ContactController::class, 'confirm'])->name('contact_confirm');
+    Route::view('input', 'front.contact.input')->name('contact_input');
     Route::post('complete', [ContactController::class, 'complete'])->name('contact_complete');
 });
