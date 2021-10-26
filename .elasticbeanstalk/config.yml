@@ -1,6 +1,6 @@
 branch-defaults:
   create_contact:
-    environment: null
+    environment: Prtest-env
     group_suffix: null
 global:
   application_name: pr_Test
