@@ -115,4 +115,13 @@ return [
         ],
     ],
 
+     'contact_from' => [
+         'address' => env('MAIL_FROM_ADDRESS'),
+         'name' => env('MAIL_FROM_NAME'),
+     ],
+
+    'support' => [
+        'address' => 'support@example.com',
+        'name' => env('MAIL_FROM_NAME'),
+    ]
 ];

@@ -1,5 +1,6 @@
 <?php declare(strict_types=1);
 
+use App\Http\Controllers\Front\ContactController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -12,3 +13,9 @@ use Illuminate\Support\Facades\Route;
 | contains the "web" middleware group. Now create something great!
 |
 */
+Route::view('/', 'front.index')->name('home');
+
+Route::group(['prefix' => 'contact'], function () {
+    Route::view('input', 'front.contact.input')->name('contact_input');
+    Route::post('complete', [ContactController::class, 'complete'])->name('contact_complete');
+});
