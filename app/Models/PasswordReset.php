@@ -5,8 +5,10 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
+/** @use HasFactory<\Database\Factories\PasswordResetFactory> */
 class PasswordReset extends Model
 {
+    /** @use HasFactory<\Database\Factories\PasswordResetFactory> */
     use HasFactory;
 
     /**
@@ -19,7 +21,7 @@ class PasswordReset extends Model
     /**
      * The attributes that are mass assignable.
      *
-     * @var array<array-key, string>
+     * @var array<int, string>
      */
     protected $fillable = [
         'email',
@@ -29,7 +31,7 @@ class PasswordReset extends Model
     /**
      * The attributes that should be cast to native types.
      *
-     * @var array
+     * @var array<string, string>
      */
     protected $casts = [
         'id' => 'integer',
