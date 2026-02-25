@@ -50,14 +50,14 @@ class UserControllerTest extends TestCase
     {
         $user = User::factory()->create();
         $response = $this->post(route('admin_user_update', $user), [
-            'nickname' => 'テストユーザー', 'email' => 'test@exsample.com'
+            'nickname' => 'テストユーザー', 'email' => 'test@example.com'
         ]);
 
         $response->assertStatus(302);
         $response->assertSessionHas('status');
         $this->assertDatabaseHas('users', [
             'nickname' => 'テストユーザー',
-            'email' => 'test@exsample.com'
+            'email' => 'test@example.com'
         ]);
     }
 

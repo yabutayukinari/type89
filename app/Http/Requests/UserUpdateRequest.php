@@ -14,7 +14,7 @@ class UserUpdateRequest extends FormRequest
      */
     public function authorize()
     {
-        return true;
+        return auth()->check();
     }
 
     /**
@@ -26,7 +26,7 @@ class UserUpdateRequest extends FormRequest
     {
         return [
             'nickname' => 'sometimes|max:100',
-            'email' => 'email:rfc|max:50',
+            'email' => 'email:rfc|max:254',
         ];
     }
 }
