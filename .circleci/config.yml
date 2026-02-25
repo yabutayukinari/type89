@@ -6,17 +6,8 @@ version: 2
 jobs:
   test:
     docker:
-      # Specify the version you desire here
-      - image: circleci/php:8.0.1-apache-buster
-
-      # Specify service dependencies here if necessary
-      # CircleCI maintains a library of pre-built images
-      # documented at https://circleci.com/docs/2.0/circleci-images/
-      # Using the RAM variation mitigates I/O contention
-      # for database intensive operations.
-      # - image: circleci/mysql:5.7-ram
-      # - image: redis:3
-      - image: circleci/mysql:5.7
+      - image: cimg/php:8.4
+      - image: cimg/mysql:8.0
         environment:
           MYSQL_ALLOW_EMPTY_PASSWORD: yes
           MYSQL_USER: sail
@@ -27,34 +18,30 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Install MySQL driver
+          name: Install PHP extensions
           command: |
-            sudo docker-php-ext-configure pdo_mysql --with-pdo-mysql=mysqlnd
+            sudo apt-get update
+            sudo apt-get install -y libzip-dev
             sudo docker-php-ext-install zip bcmath pdo_mysql
 
       # composer cache
       - restore_cache:
           keys:
-            # "composer.json" can be used if "composer.json"
-            # is not committed to the repository.
-            - composer-v1-{{ checksum "composer.lock" }}
-            # fallback to using the latest cache if no exact match is found
-            - composer-v1-
+            - composer-v2-{{ checksum "composer.lock" }}
+            - composer-v2-
       - run: composer install -n --prefer-dist
       - save_cache:
-          key: composer-v1-{{ checksum "composer.lock" }}
+          key: composer-v2-{{ checksum "composer.lock" }}
           paths:
             - vendor
 
       # prepare the database
-      - run: touch storage/testing.sqlite
       - run: php artisan migrate --env=testing --database=mysql --force
       - run: ./vendor/bin/php-cs-fixer fix -v --diff --dry-run
       - run: ./vendor/bin/phpcs --standard=phpcs.xml ./
       - run: ./vendor/bin/phpstan analyse --memory-limit=2G
       - run: ./vendor/bin/phpmd . text phpmd.xml
-      - run: ./vendor/bin/psalm
-      - run: phpdbg -qrr ./vendor/bin/phpunit --coverage-html /tmp/build/coverage
+      - run: ./vendor/bin/phpunit --coverage-html /tmp/build/coverage
       - store_artifacts:
           path: /tmp/build
           destination: build

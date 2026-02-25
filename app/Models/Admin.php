@@ -6,14 +6,16 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+/** @use HasFactory<\Database\Factories\AdminFactory> */
 class Admin extends Model
 {
+    /** @use HasFactory<\Database\Factories\AdminFactory> */
     use HasFactory, SoftDeletes;
 
     /**
      * The attributes that are mass assignable.
      *
-     * @var array<array-key, string>
+     * @var array<int, string>
      */
     protected $fillable = [
         'name',
@@ -26,7 +28,7 @@ class Admin extends Model
     /**
      * The attributes that should be hidden for serialization.
      *
-     * @var array
+     * @var array<int, string>
      */
     protected $hidden = [
         'password',
@@ -36,7 +38,7 @@ class Admin extends Model
     /**
      * The attributes that should be cast to native types.
      *
-     * @var array
+     * @var array<string, string>
      */
     protected $casts = [
         'id' => 'integer',

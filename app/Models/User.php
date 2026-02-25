@@ -9,14 +9,16 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Laravel\Sanctum\HasApiTokens;
 
+/** @use HasFactory<\Database\Factories\UserFactory> */
 class User extends Authenticatable implements MustVerifyEmail
 {
+    /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasApiTokens, HasFactory, Notifiable, SoftDeletes;
 
     /**
      * The attributes that are mass assignable.
      *
-     * @var string[]
+     * @var array<int, string>
      */
     protected $fillable = [
         'nickname',
@@ -29,7 +31,7 @@ class User extends Authenticatable implements MustVerifyEmail
     /**
      * The attributes that should be hidden for serialization.
      *
-     * @var array
+     * @var array<int, string>
      */
     protected $hidden = [
         'password',
@@ -39,7 +41,7 @@ class User extends Authenticatable implements MustVerifyEmail
     /**
      * The attributes that should be cast to native types.
      *
-     * @var array
+     * @var array<string, string>
      */
     protected $casts = [
         'id' => 'integer',
