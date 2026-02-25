@@ -20,8 +20,11 @@ jobs:
       - run:
           name: Install PHP extensions
           command: |
-            sudo apt-get update
-            sudo apt-get install -y php8.4-mysql php8.4-zip php8.4-bcmath php8.4-pcov
+            # cimg/php images have common extensions pre-installed (pdo_mysql, zip, bcmath, etc.)
+            # Install pcov for code coverage via pecl
+            sudo pecl install pcov
+            PHP_INI_DIR=$(php -r 'echo PHP_CONFIG_FILE_SCAN_DIR;')
+            echo 'extension=pcov.so' | sudo tee "${PHP_INI_DIR}/pcov.ini"
       - run:
           name: Setup environment
           command: cp .env.testing .env
