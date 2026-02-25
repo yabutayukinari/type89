@@ -21,8 +21,10 @@ jobs:
           name: Install PHP extensions
           command: |
             sudo apt-get update
-            sudo apt-get install -y libzip-dev
-            sudo docker-php-ext-install zip bcmath pdo_mysql
+            sudo apt-get install -y php8.4-mysql php8.4-zip php8.4-bcmath php8.4-pcov
+      - run:
+          name: Setup environment
+          command: cp .env.testing .env
 
       # composer cache
       - restore_cache:
@@ -36,12 +38,17 @@ jobs:
             - vendor
 
       # prepare the database
+      - run:
+          name: Wait for MySQL
+          command: dockerize -wait tcp://127.0.0.1:3306 -timeout 60s
       - run: php artisan migrate --env=testing --database=mysql --force
       - run: ./vendor/bin/php-cs-fixer fix -v --diff --dry-run
       - run: ./vendor/bin/phpcs --standard=phpcs.xml ./
       - run: ./vendor/bin/phpstan analyse --memory-limit=2G
       - run: ./vendor/bin/phpmd . text phpmd.xml
-      - run: ./vendor/bin/phpunit --coverage-html /tmp/build/coverage
+      - run:
+          name: Run tests with coverage
+          command: php -d pcov.enabled=1 ./vendor/bin/phpunit --coverage-html /tmp/build/coverage
       - store_artifacts:
           path: /tmp/build
           destination: build
