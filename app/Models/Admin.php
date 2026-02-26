@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace App\Models;
 
@@ -10,7 +12,8 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Admin extends Model
 {
     /** @use HasFactory<\Database\Factories\AdminFactory> */
-    use HasFactory, SoftDeletes;
+    use HasFactory;
+    use SoftDeletes;
 
     /**
      * The attributes that are mass assignable.
