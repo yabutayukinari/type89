@@ -51,7 +51,7 @@ class UserControllerTest extends TestCase
     public function testUpdate(): void
     {
         $user = User::factory()->create();
-        $response = $this->post(route('admin_user_update', $user), [
+        $response = $this->actingAs($user)->post(route('admin_user_update', $user), [
             'nickname' => 'テストユーザー', 'email' => 'test@example.com'
         ]);
 
@@ -69,7 +69,7 @@ class UserControllerTest extends TestCase
     public function testUpdateValidateError(): void
     {
         $user = User::factory()->create();
-        $response = $this->post(route('admin_user_update', $user), [
+        $response = $this->actingAs($user)->post(route('admin_user_update', $user), [
             'nickname' => Str::random(101), 'email' => 'aaa'
         ]);
 
