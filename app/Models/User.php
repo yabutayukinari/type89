@@ -11,11 +11,10 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Laravel\Sanctum\HasApiTokens;
 
-/** @use HasFactory<\Database\Factories\UserFactory> */
 class User extends Authenticatable implements MustVerifyEmail
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasApiTokens;
+    /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory;
     use Notifiable;
     use SoftDeletes;
