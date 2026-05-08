@@ -1,5 +1,11 @@
 # type_89
 
+[![CI](https://github.com/yabutayukinari/type89/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/yabutayukinari/type89/actions/workflows/ci.yml)
+[![CodeQL](https://github.com/yabutayukinari/type89/actions/workflows/codeql.yml/badge.svg?branch=main)](https://github.com/yabutayukinari/type89/actions/workflows/codeql.yml)
+[![codecov](https://codecov.io/gh/yabutayukinari/type89/branch/main/graph/badge.svg)](https://codecov.io/gh/yabutayukinari/type89)
+[![PHP](https://img.shields.io/badge/php-%5E8.4-777bb4)](https://www.php.net/)
+[![Laravel](https://img.shields.io/badge/laravel-13-ff2d20)](https://laravel.com/)
+
 Laravel をベースにしたユーザー管理アプリケーションのプラクティス用リポジトリです。
 
 ## 技術スタック
