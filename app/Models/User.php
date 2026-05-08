@@ -21,7 +21,7 @@ class User extends Authenticatable implements FilamentUser, HasName, MustVerifyE
     /**
      * The attributes that are mass assignable.
      *
-     * @var array<int, string>
+     * @var list<string>
      */
     protected $fillable = [
         'name',
@@ -34,7 +34,7 @@ class User extends Authenticatable implements FilamentUser, HasName, MustVerifyE
     /**
      * The attributes that should be hidden for serialization.
      *
-     * @var array<int, string>
+     * @var list<string>
      */
     protected $hidden = [
         'password',
@@ -54,7 +54,7 @@ class User extends Authenticatable implements FilamentUser, HasName, MustVerifyE
 
     public function canAccessPanel(Panel $panel): bool
     {
-        return true;
+        return $panel->getId() === 'admin';
     }
 
     public function getFilamentName(): string
