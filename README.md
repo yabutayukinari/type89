@@ -4,7 +4,7 @@ Laravel をベースにしたユーザー管理アプリケーションのプラ
 
 ## 技術スタック
 
-- PHP 8.3+
+- PHP 8.4+
 - Laravel 13
 - Filament 5
 - Laravel Sanctum 4
