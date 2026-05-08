@@ -21,10 +21,12 @@ jobs:
           name: Install PHP extensions
           command: |
             # cimg/php images have common extensions pre-installed (pdo_mysql, zip, bcmath, etc.)
-            # Install pcov for code coverage via pecl
-            sudo pecl install pcov
-            PHP_INI_DIR=$(php -r 'echo PHP_CONFIG_FILE_SCAN_DIR;')
-            echo 'extension=pcov.so' | sudo tee "${PHP_INI_DIR}/pcov.ini"
+            # Install pcov for code coverage if it's not already available.
+            if ! php -m | grep -qi '^pcov$'; then
+              sudo pecl install pcov
+              PHP_INI_DIR=$(php -r 'echo PHP_CONFIG_FILE_SCAN_DIR;')
+              echo 'extension=pcov.so' | sudo tee "${PHP_INI_DIR}/pcov.ini"
+            fi
       - run:
           name: Setup environment
           command: cp .env.testing .env
