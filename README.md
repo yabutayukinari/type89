@@ -1,33 +1,63 @@
-# Laravel Practice
+# type_89
 
-## Static Analysis Tool
-- larastan
-- PHP Coding Standards Fixer
+Laravel をベースにしたユーザー管理アプリケーションのプラクティス用リポジトリです。
 
-## test実行前に事前準備が必要
-- PHPUnitを動かすための準備が必要
+## 技術スタック
 
-### テーブル作成
-```mysql
-create schema type_89_test;
+- PHP 8.3+
+- Laravel 13
+- Filament 5
+- Laravel Sanctum 4
+- MySQL（開発・本番） / SQLite インメモリ（テスト）
+- Vite
+
+## セットアップ
+
+```bash
+composer install
+npm install
+cp .env.example .env
+php artisan key:generate
+php artisan migrate
 ```
 
-### ユーザー作成
-```mysql
-create user type_89_test identified by 'password';
+## 開発
+
+```bash
+npm run dev         # 開発ビルド（watch）
+npm run build       # 本番ビルド
 ```
 
-### 権限追加
-```mysql
-GRANT all ON type_89_test.* TO sail_test;
+## テスト
+
+`phpunit.xml` で SQLite インメモリを使用するよう設定されているため、追加のセットアップなしでテストを実行できます。
+
+```bash
+composer test                            # 全テスト
+./vendor/bin/phpunit --filter=ClassName  # 特定クラス
 ```
-### .env.test修正
-- 以下に書き換える
-```dotenv
-DB_CONNECTION=mysql
-DB_HOST=mysql
-DB_PORT=3306
-DB_DATABASE=type_89_test
-DB_USERNAME=sail_test
-DB_PASSWORD=password
+
+### MySQL を利用した結合テストを行う場合
+
+`.env.testing` の DB 設定に合わせて、MySQL 側にデータベースとユーザーを用意してください。
+
+```sql
+CREATE SCHEMA testing;
+CREATE USER 'sail'@'%' IDENTIFIED BY 'password';
+GRANT ALL ON testing.* TO 'sail'@'%';
 ```
+
+## コード品質
+
+| コマンド | 内容 |
+| --- | --- |
+| `composer csf` | PHP CS Fixer（dry-run） |
+| `composer csf-fix` | PHP CS Fixer（自動修正） |
+| `composer cs` | PHP CodeSniffer |
+| `composer cs-fix` | PHP CodeSniffer（自動修正） |
+| `composer sa` | Larastan / PHPStan |
+| `composer md` | PHPMD |
+| `composer build` | csf + cs + sa + md |
+| `composer tests` | build + test |
+
+コミット前に `composer tests` がグリーンになることを確認してください。
