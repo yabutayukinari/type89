@@ -1,8 +1,8 @@
-# PHP CircleCI 2.0 configuration file
+# PHP CircleCI 2.1 configuration file
 #
-# Check https://circleci.com/docs/2.0/language-php/ for more details
-#
-version: 2
+# Check https://circleci.com/docs/configuration-reference/ for more details.
+version: 2.1
+
 jobs:
   test:
     docker:
@@ -13,51 +13,59 @@ jobs:
           MYSQL_USER: sail
           MYSQL_DATABASE: type_89
           MYSQL_PASSWORD: 'password'
-          MYSQL_HOST: 127.0.0.1
 
     steps:
       - checkout
+
       - run:
-          name: Install PHP extensions
+          name: Install pcov (skip if already loaded)
           command: |
-            # cimg/php images have common extensions pre-installed (pdo_mysql, zip, bcmath, etc.)
-            # Install pcov for code coverage via pecl
-            sudo pecl install pcov
-            PHP_INI_DIR=$(php -r 'echo PHP_CONFIG_FILE_SCAN_DIR;')
-            echo 'extension=pcov.so' | sudo tee "${PHP_INI_DIR}/pcov.ini"
+            # cimg/php images may bundle pcov; install only when missing.
+            if ! php -m | grep -qi '^pcov$'; then
+              sudo pecl install pcov
+              PHP_INI_DIR=$(php -r 'echo PHP_CONFIG_FILE_SCAN_DIR;')
+              echo 'extension=pcov.so' | sudo tee "${PHP_INI_DIR}/pcov.ini"
+            fi
+
       - run:
           name: Setup environment
-          command: cp .env.testing .env
+          command: cp .env.ci .env
 
-      # composer cache
       - restore_cache:
           keys:
-            - composer-v2-{{ checksum "composer.lock" }}
-            - composer-v2-
-      - run: composer install -n --prefer-dist
+            - composer-v3-{{ checksum "composer.lock" }}
+            - composer-v3-
+
+      - run:
+          name: Install Composer dependencies
+          command: composer install -n --prefer-dist --no-progress
+
       - save_cache:
-          key: composer-v2-{{ checksum "composer.lock" }}
+          key: composer-v3-{{ checksum "composer.lock" }}
           paths:
             - vendor
 
-      # prepare the database
       - run:
           name: Wait for MySQL
           command: dockerize -wait tcp://127.0.0.1:3306 -timeout 60s
-      - run: php artisan migrate --env=testing --database=mysql --force
-      - run: ./vendor/bin/php-cs-fixer fix -v --diff --dry-run
-      - run: ./vendor/bin/phpcs --standard=phpcs.xml ./
-      - run: ./vendor/bin/phpstan analyse --memory-limit=2G
-      - run: ./vendor/bin/phpmd . text phpmd.xml
+
       - run:
-          name: Run tests with coverage
+          name: Migrate (MySQL smoke test)
+          command: php artisan migrate --force
+
+      - run:
+          name: Static analysis and coding standards
+          command: composer build
+
+      - run:
+          name: Run PHPUnit with coverage
           command: php -d pcov.enabled=1 ./vendor/bin/phpunit --coverage-html /tmp/build/coverage
+
       - store_artifacts:
           path: /tmp/build
           destination: build
 
 workflows:
-  version: 2
-  workflow:
+  build-and-test:
     jobs:
       - test

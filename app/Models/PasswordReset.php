@@ -2,13 +2,14 @@
 
 namespace App\Models;
 
+use Database\Factories\PasswordResetFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-/** @use HasFactory<\Database\Factories\PasswordResetFactory> */
+/** @use HasFactory<PasswordResetFactory> */
 class PasswordReset extends Model
 {
-    /** @use HasFactory<\Database\Factories\PasswordResetFactory> */
+    /** @use HasFactory<PasswordResetFactory> */
     use HasFactory;
 
     /**

@@ -2,14 +2,15 @@
 
 namespace App\Models;
 
+use Database\Factories\AdminFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-/** @use HasFactory<\Database\Factories\AdminFactory> */
+/** @use HasFactory<AdminFactory> */
 class Admin extends Model
 {
-    /** @use HasFactory<\Database\Factories\AdminFactory> */
+    /** @use HasFactory<AdminFactory> */
     use HasFactory, SoftDeletes;
 
     /**
