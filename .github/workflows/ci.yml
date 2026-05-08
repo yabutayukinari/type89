@@ -62,6 +62,9 @@ jobs:
       - name: Install composer dependencies
         run: composer install --prefer-dist --no-interaction --no-progress
 
+      - name: Audit composer dependencies for known vulnerabilities
+        run: composer audit --locked
+
       - name: Prepare environment (.env)
         run: cp .env.ci .env
 
@@ -121,6 +124,10 @@ jobs:
 
       - name: Install npm dependencies
         run: npm ci
+
+      - name: Audit npm dependencies for known vulnerabilities
+        # high+ only — moderate/low transitive npm advisories are too noisy to gate PRs on
+        run: npm audit --audit-level=high
 
       - name: Build assets
         run: npm run build
