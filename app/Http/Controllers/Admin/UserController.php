@@ -36,7 +36,7 @@ class UserController extends Controller
      */
     public function update(UserUpdateRequest $request, User $user): RedirectResponse
     {
-        $user->update($request->only(['nickname', 'email']));
+        $user->update($request->only(['name', 'email']));
 
         return back()->with('status', 'Profile updated!');
     }

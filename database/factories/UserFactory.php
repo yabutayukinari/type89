@@ -24,7 +24,7 @@ class UserFactory extends Factory
     public function definition()
     {
         return [
-            'nickname' => $this->faker->regexify('[A-Za-z0-9]{100}'),
+            'name' => $this->faker->name(),
             'email' => $this->faker->safeEmail,
             'password' => Hash::make($this->faker->password),
             'last_login_at' => $this->faker->dateTime(),

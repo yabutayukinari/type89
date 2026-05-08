@@ -50,13 +50,13 @@ class UserControllerTest extends TestCase
     {
         $user = User::factory()->create();
         $response = $this->post(route('admin_user_update', $user), [
-            'nickname' => 'テストユーザー', 'email' => 'test@exsample.com'
+            'name' => 'テストユーザー', 'email' => 'test@exsample.com'
         ]);
 
         $response->assertStatus(302);
         $response->assertSessionHas('status');
         $this->assertDatabaseHas('users', [
-            'nickname' => 'テストユーザー',
+            'name' => 'テストユーザー',
             'email' => 'test@exsample.com'
         ]);
     }
@@ -68,7 +68,7 @@ class UserControllerTest extends TestCase
     {
         $user = User::factory()->create();
         $response = $this->post(route('admin_user_update', $user), [
-            'nickname' => Str::random(101), 'email' => 'aaa'
+            'name' => Str::random(101), 'email' => 'aaa'
         ]);
 
         $response->assertStatus(302);

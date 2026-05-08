@@ -25,7 +25,7 @@ class UserUpdateRequest extends FormRequest
     public function rules()
     {
         return [
-            'nickname' => 'sometimes|max:100',
+            'name' => 'sometimes|max:255',
             'email' => 'email:rfc|max:50',
         ];
     }
