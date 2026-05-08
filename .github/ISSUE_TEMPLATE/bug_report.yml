@@ -1,0 +1,63 @@
+name: Bug report
+description: バグ報告
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        バグの内容を以下のテンプレートに沿って記入してください。
+
+  - type: textarea
+    id: summary
+    attributes:
+      label: 概要
+      description: 何が起きていますか？
+      placeholder: 例) 管理画面でユーザー編集を保存すると 500 エラーが返る
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: 再現手順
+      description: 再現するための具体的な手順
+      placeholder: |
+        1. /admin/users にアクセス
+        2. 任意のユーザーの「編集」をクリック
+        3. ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: 期待する挙動
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: 実際の挙動
+      description: エラーメッセージ・スタックトレース・スクリーンショットなど
+    validations:
+      required: true
+
+  - type: input
+    id: php-version
+    attributes:
+      label: PHP バージョン
+      placeholder: "8.3.x"
+
+  - type: input
+    id: laravel-version
+    attributes:
+      label: Laravel バージョン
+      placeholder: "13.x"
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: 補足情報
+      description: その他の関連情報

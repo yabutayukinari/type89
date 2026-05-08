@@ -1,0 +1,31 @@
+name: Feature request
+description: 機能要望
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: 解決したい課題
+      description: どんな課題・困りごとを解決したいか
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: 提案する機能
+      description: どのような機能で課題を解決するか
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: 代替案
+      description: 検討した別の方法があれば記入
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: 補足情報
