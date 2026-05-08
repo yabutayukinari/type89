@@ -27,6 +27,18 @@ php artisan key:generate
 php artisan migrate
 ```
 
+### Git フック (Lefthook)
+
+`lefthook.yml` で pre-commit / pre-push フックを管理しています。初回のみ以下を実行してください。
+
+```bash
+brew install lefthook    # 未導入の場合
+lefthook install         # .git/hooks にフックを登録
+```
+
+- **pre-commit**: ステージ済み PHP ファイルに `php-cs-fixer fix` と `phpcs` を実行
+- **pre-push**: `composer build`（csf + cs + sa + md）でフル静的解析
+
 ## 開発
 
 ```bash
