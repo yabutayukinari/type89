@@ -18,3 +18,4 @@ yarn-error.log
 /.blueprint
 .php-cs-fixer.cache
 /coverage/
+/.claude/
