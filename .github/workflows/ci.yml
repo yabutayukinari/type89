@@ -91,6 +91,13 @@ jobs:
             --coverage-html build/coverage/html \
             --coverage-clover build/coverage/clover.xml
 
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          files: build/coverage/clover.xml
+          flags: php
+          token: ${{ secrets.CODECOV_TOKEN }}
+
       - name: Upload coverage artifact
         uses: actions/upload-artifact@v4
         with:
