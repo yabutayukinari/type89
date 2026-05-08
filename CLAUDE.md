@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a Laravel 13 project with PHP 8.3+ that demonstrates Laravel best practices. The project includes a user management system with admin controllers (including a Filament admin panel) and comprehensive static analysis tools.
+This is a Laravel 13 project with PHP 8.4+ that demonstrates Laravel best practices. The project includes a user management system with admin controllers (including a Filament admin panel) and comprehensive static analysis tools.
 
 ## Common Commands
 
@@ -77,7 +77,7 @@ GRANT ALL ON testing.* TO 'sail'@'%';
 
 ### Key Technology Stack
 - **Framework:** Laravel 13
-- **Language:** PHP 8.3+
+- **Language:** PHP 8.4+
 - **Admin Panel:** Filament 5
 - **Authentication:** Laravel Sanctum 4 for API token authentication
 - **Frontend Build:** Vite 6 (with `laravel-vite-plugin` and Tailwind CSS 4)
@@ -118,5 +118,5 @@ The application includes an admin user management system:
 
 - The project enforces strict coding standards. All code must pass static analysis before being merged.
 - Tests are configured to run against an in-memory SQLite database for speed and isolation.
-- PHP 8.3+ type declarations are expected throughout the codebase.
+- PHP 8.4+ type declarations are expected throughout the codebase.
 - The application uses Laravel Sanctum for API authentication; refer to `laravel/sanctum` documentation for API token management.
