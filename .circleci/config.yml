@@ -29,7 +29,7 @@ jobs:
 
       - run:
           name: Setup environment
-          command: cp .env.testing .env
+          command: cp .env.ci .env
 
       - restore_cache:
           keys:
@@ -51,7 +51,7 @@ jobs:
 
       - run:
           name: Migrate (MySQL smoke test)
-          command: php artisan migrate --env=testing --force
+          command: php artisan migrate --force
 
       - run:
           name: Static analysis and coding standards
