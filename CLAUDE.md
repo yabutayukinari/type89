@@ -44,15 +44,9 @@ The project runs entirely inside Laravel Sail containers — local PHP / Compose
 - `./vendor/bin/sail composer tests` - Run all checks including tests (csf, cs, sa, md, test)
 
 ### Database Setup for Tests
-PHPUnit is configured in `phpunit.xml` to use a SQLite in-memory database by default, so no setup is required for the standard test run.
+Tests run against the dedicated `mysql.test` Sail container (MySQL 8 on tmpfs for speed). `make setup` generates `.env.testing` from `.env.example` automatically — no manual database setup is required.
 
-If you need to run integration tests against MySQL, align the database with `.env.testing` (default: database `testing`, user `sail`):
-
-```sql
-CREATE SCHEMA testing;
-CREATE USER 'sail'@'%' IDENTIFIED BY 'password';
-GRANT ALL ON testing.* TO 'sail'@'%';
-```
+`.env` and `.env.testing` are git-ignored because they contain freshly-generated `APP_KEY` values. The CI workflow regenerates them from `.env.example` on each run.
 
 ## Architecture and Structure
 

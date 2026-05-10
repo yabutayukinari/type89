@@ -24,6 +24,16 @@ setup: ## One-shot bootstrap (idempotent)
 	else \
 		echo "==> .env exists, skipping"; \
 	fi
+	@if [ ! -f .env.testing ]; then \
+		echo "==> creating .env.testing from .env.example"; \
+		cp .env.example .env.testing; \
+		sed -i.bak 's/^APP_ENV=.*/APP_ENV=testing/' .env.testing; \
+		sed -i.bak 's/^DB_HOST=.*/DB_HOST=mysql.test/' .env.testing; \
+		sed -i.bak 's/^DB_DATABASE=.*/DB_DATABASE=testing/' .env.testing; \
+		rm -f .env.testing.bak; \
+	else \
+		echo "==> .env.testing exists, skipping"; \
+	fi
 	@echo "==> starting Sail containers"
 	@$(SAIL) up -d
 	@printf "==> waiting for MySQL "
@@ -40,10 +50,16 @@ setup: ## One-shot bootstrap (idempotent)
 		fi; \
 	done
 	@if grep -qE '^APP_KEY=base64:.+' .env; then \
-		echo "==> APP_KEY exists, skipping key:generate"; \
+		echo "==> APP_KEY exists in .env, skipping key:generate"; \
 	else \
-		echo "==> generating APP_KEY"; \
+		echo "==> generating APP_KEY for .env"; \
 		$(SAIL) artisan key:generate; \
+	fi
+	@if grep -qE '^APP_KEY=base64:.+' .env.testing; then \
+		echo "==> APP_KEY exists in .env.testing, skipping key:generate"; \
+	else \
+		echo "==> generating APP_KEY for .env.testing"; \
+		$(SAIL) artisan key:generate --env=testing --force; \
 	fi
 	@echo "==> running migrations"
 	@$(SAIL) artisan migrate

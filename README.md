@@ -31,24 +31,13 @@ make setup
 
 ## テスト
 
-`phpunit.xml` で SQLite インメモリを使う設定のため、追加のセットアップは不要です。
+テストは Sail の `mysql.test` コンテナ（tmpfs マウントの MySQL）に対して実行します。`make setup` で `.env.testing` が生成されるので、追加のセットアップは不要です。
 
 ```bash
 make test
 ```
 
-<details>
-<summary>MySQL を使った結合テストを行う場合</summary>
-
-`.env.testing` の DB 設定に合わせ、MySQL 側にデータベースとユーザーを用意します。
-
-```sql
-CREATE SCHEMA testing;
-CREATE USER 'sail'@'%' IDENTIFIED BY 'password';
-GRANT ALL ON testing.* TO 'sail'@'%';
-```
-
-</details>
+`.env.testing` と `.env` はそれぞれ機密情報（APP_KEY 等）を含むため git 管理外（`.gitignore`）です。`make setup` 実行時に `.env.example` を雛形としてコピーし、`php artisan key:generate` で各環境固有の APP_KEY を生成します。
 
 ## Git フック
 
