@@ -26,7 +26,7 @@ jobs:
           MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
           MYSQL_USER: sail
           MYSQL_PASSWORD: password
-          MYSQL_DATABASE: type_89
+          MYSQL_DATABASE: testing
         ports:
           - 3306:3306
         options: >-
@@ -65,8 +65,15 @@ jobs:
       - name: Audit composer dependencies for known vulnerabilities
         run: composer audit --locked
 
-      - name: Prepare environment (.env)
-        run: cp .env.ci .env
+      - name: Prepare environment (.env, .env.testing)
+        run: |
+          cp .env.example .env
+          cp .env.example .env.testing
+          sed -i 's|^APP_ENV=.*|APP_ENV=testing|' .env .env.testing
+          sed -i 's|^DB_HOST=.*|DB_HOST=127.0.0.1|' .env .env.testing
+          sed -i 's|^DB_DATABASE=.*|DB_DATABASE=testing|' .env .env.testing
+          php artisan key:generate --force
+          php artisan key:generate --env=testing --force
 
       - name: Run static analysis (csf, cs, sa, md)
         run: composer build
