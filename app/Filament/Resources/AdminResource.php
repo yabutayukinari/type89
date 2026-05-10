@@ -2,49 +2,45 @@
 
 namespace App\Filament\Resources;
 
-use Filament\Schemas\Schema;
-use Filament\Schemas\Components\Section;
-use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\DateTimePicker;
-use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Filters\TrashedFilter;
-use Filament\Actions\ViewAction;
-use Filament\Actions\EditAction;
-use Filament\Actions\DeleteAction;
-use Filament\Actions\RestoreAction;
-use Filament\Actions\BulkActionGroup;
-use Filament\Actions\DeleteBulkAction;
-use Filament\Actions\RestoreBulkAction;
-use Filament\Actions\ForceDeleteBulkAction;
-use App\Filament\Resources\UserResource\Pages\ListUsers;
-use App\Filament\Resources\UserResource\Pages\CreateUser;
-use App\Filament\Resources\UserResource\Pages\ViewUser;
-use App\Filament\Resources\UserResource\Pages\EditUser;
-use App\Filament\Resources\UserResource\Pages;
+use App\Enums\AdminRole;
+use App\Filament\Resources\AdminResource\Pages\CreateAdmin;
+use App\Filament\Resources\AdminResource\Pages\EditAdmin;
+use App\Filament\Resources\AdminResource\Pages\ListAdmins;
+use App\Filament\Resources\AdminResource\Pages\ViewAdmin;
 use App\Models\Admin;
-use App\Models\User;
-use Filament\Forms;
-use Filament\Forms\Form;
-use Filament\Resources\Resource;
-use Filament\Tables;
-use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
-use Illuminate\Support\Facades\Hash;
 use BackedEnum;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\EditAction;
+use Filament\Actions\ViewAction;
+use Filament\Forms\Components\DateTimePicker;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
+use Filament\Resources\Resource;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Schema;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Table;
+use Illuminate\Support\Facades\Hash;
 
 /**
- * @extends Resource<User>
+ * @extends Resource<Admin>
  */
-class UserResource extends Resource
+class AdminResource extends Resource
 {
-    protected static ?string $model = User::class;
+    protected static ?string $model = Admin::class;
 
-    protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-users';
+    protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-shield-check';
 
-    protected static ?string $modelLabel = 'ユーザー';
+    protected static ?string $modelLabel = '管理者';
 
-    protected static ?string $pluralModelLabel = 'ユーザー';
+    protected static ?string $pluralModelLabel = '管理者';
+
+    public static function canAccess(): bool
+    {
+        return Admin::isSystemAdminLoggedIn();
+    }
 
     public static function form(Schema $schema): Schema
     {
@@ -55,13 +51,21 @@ class UserResource extends Resource
                         TextInput::make('name')
                             ->label('名前')
                             ->required()
-                            ->maxLength(255),
+                            ->maxLength(100),
                         TextInput::make('email')
                             ->label('メールアドレス')
                             ->email()
                             ->required()
                             ->unique(ignoreRecord: true)
                             ->maxLength(50),
+                        Select::make('role')
+                            ->label('ロール')
+                            ->options([
+                                AdminRole::SystemAdmin->value => AdminRole::SystemAdmin->label(),
+                                AdminRole::GeneralAdmin->value => AdminRole::GeneralAdmin->label(),
+                            ])
+                            ->required()
+                            ->default(AdminRole::GeneralAdmin->value),
                         TextInput::make('password')
                             ->label('パスワード')
                             ->password()
@@ -89,6 +93,11 @@ class UserResource extends Resource
                 TextColumn::make('email')
                     ->label('メールアドレス')
                     ->searchable(),
+                TextColumn::make('role')
+                    ->label('ロール')
+                    ->badge()
+                    ->formatStateUsing(static fn (AdminRole $state): string => $state->label())
+                    ->sortable(),
                 TextColumn::make('email_verified_at')
                     ->label('メール認証')
                     ->dateTime('Y/m/d H:i')
@@ -103,22 +112,14 @@ class UserResource extends Resource
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
-            ->filters([
-                TrashedFilter::make()
-                    ->label('削除済み'),
-            ])
             ->recordActions([
                 ViewAction::make(),
                 EditAction::make(),
                 DeleteAction::make(),
-                RestoreAction::make(),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
                     DeleteBulkAction::make(),
-                    RestoreBulkAction::make(),
-                    ForceDeleteBulkAction::make()
-                        ->visible(static fn (): bool => Admin::isSystemAdminLoggedIn()),
                 ]),
             ]);
     }
@@ -133,19 +134,10 @@ class UserResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => ListUsers::route('/'),
-            'create' => CreateUser::route('/create'),
-            'view' => ViewUser::route('/{record}'),
-            'edit' => EditUser::route('/{record}/edit'),
+            'index' => ListAdmins::route('/'),
+            'create' => CreateAdmin::route('/create'),
+            'view' => ViewAdmin::route('/{record}'),
+            'edit' => EditAdmin::route('/{record}/edit'),
         ];
-    }
-
-    /** @return Builder<User> */
-    public static function getEloquentQuery(): Builder
-    {
-        return parent::getEloquentQuery()
-            ->withoutGlobalScopes([
-                SoftDeletingScope::class,
-            ]);
     }
 }
