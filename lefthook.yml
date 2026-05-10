@@ -3,13 +3,13 @@ pre-commit:
   commands:
     php-cs-fixer:
       glob: "*.php"
-      run: ./vendor/bin/php-cs-fixer fix {staged_files}
+      run: ./vendor/bin/sail bin php-cs-fixer fix {staged_files}
       stage_fixed: true
     phpcs:
       glob: "*.php"
-      run: ./vendor/bin/phpcs --standard=phpcs.xml {staged_files}
+      run: ./vendor/bin/sail bin phpcs --standard=phpcs.xml {staged_files}
 
 pre-push:
   commands:
     composer-build:
-      run: composer build
+      run: ./vendor/bin/sail composer build
