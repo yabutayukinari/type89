@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
 type HealthStatus =
@@ -30,6 +31,7 @@ export default function Home() {
   return (
     <main className="flex min-h-screen flex-col items-center justify-center gap-6 p-8">
       <h1 className="text-3xl font-bold">type89</h1>
+
       <section className="rounded-lg border border-zinc-300 bg-white p-6 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
         <h2 className="text-lg font-semibold">Laravel API health</h2>
         {health.state === 'loading' && (
@@ -41,11 +43,24 @@ export default function Home() {
           </p>
         )}
         {health.state === 'error' && (
-          <p className="mt-2 text-sm text-red-600 dark:text-red-400">
-            {health.message}
-          </p>
+          <p className="mt-2 text-sm text-red-600 dark:text-red-400">{health.message}</p>
         )}
       </section>
+
+      <nav className="flex gap-4 text-sm">
+        <Link
+          href="/login"
+          className="rounded border border-zinc-300 px-4 py-2 dark:border-zinc-700"
+        >
+          User ログイン
+        </Link>
+        <Link
+          href="/admin/login"
+          className="rounded border border-zinc-300 px-4 py-2 dark:border-zinc-700"
+        >
+          Admin ログイン
+        </Link>
+      </nav>
     </main>
   );
 }
