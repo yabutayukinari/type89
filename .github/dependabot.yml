@@ -44,3 +44,8 @@ updates:
     labels:
       - dependencies
       - github-actions
+    groups:
+      actions-minor-and-patch:
+        update-types:
+          - minor
+          - patch
