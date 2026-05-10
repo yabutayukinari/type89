@@ -1,13 +1,22 @@
 <?php declare(strict_types=1);
 
 use App\Http\Controllers\Api\Admin\AuthController as AdminAuthController;
+use App\Http\Controllers\Api\AuctionController;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\BidController;
 use App\Http\Controllers\Api\BroadcastTestController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/health', static fn () => response()->json(['status' => 'ok']))->name('api.health');
 
 Route::post('/broadcast-test', BroadcastTestController::class)->name('api.broadcast-test');
+
+Route::get('/auctions', [AuctionController::class, 'index'])->name('api.auctions.index');
+Route::get('/auctions/{auction}', [AuctionController::class, 'show'])->name('api.auctions.show');
+Route::middleware('auth:web')->group(static function (): void {
+    Route::post('/auctions', [AuctionController::class, 'store'])->name('api.auctions.store');
+    Route::post('/auctions/{auction}/bids', [BidController::class, 'store'])->name('api.auctions.bids.store');
+});
 
 Route::post('/login', [AuthController::class, 'login'])->name('api.login');
 Route::middleware('auth:web')->group(static function (): void {
