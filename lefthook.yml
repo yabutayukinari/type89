@@ -1,0 +1,15 @@
+pre-commit:
+  parallel: true
+  commands:
+    php-cs-fixer:
+      glob: "*.php"
+      run: ./vendor/bin/php-cs-fixer fix {staged_files}
+      stage_fixed: true
+    phpcs:
+      glob: "*.php"
+      run: ./vendor/bin/phpcs --standard=phpcs.xml {staged_files}
+
+pre-push:
+  commands:
+    composer-build:
+      run: composer build
