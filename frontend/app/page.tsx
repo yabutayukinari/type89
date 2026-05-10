@@ -49,6 +49,12 @@ export default function Home() {
 
       <nav className="flex flex-wrap justify-center gap-4 text-sm">
         <Link
+          href="/auctions"
+          className="rounded bg-zinc-900 px-4 py-2 text-white dark:bg-zinc-100 dark:text-zinc-900"
+        >
+          オークション一覧
+        </Link>
+        <Link
           href="/login"
           className="rounded border border-zinc-300 px-4 py-2 dark:border-zinc-700"
         >
