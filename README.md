@@ -7,82 +7,40 @@
 [![Laravel](https://img.shields.io/badge/laravel-13-ff2d20)](https://laravel.com/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
-Laravel をベースにしたユーザー管理アプリケーションのプラクティス用リポジトリです。
+ユーザー管理を題材にした、Laravel / Filament の個人プラクティス用リポジトリです。Laravel Sail で完結するため、ローカルに PHP / Composer / Node を入れる必要はありません。
 
 ## 技術スタック
 
-- PHP 8.4+
-- Laravel 13
-- Filament 5
-- Laravel Sanctum 4
-- MySQL（開発・本番） / SQLite インメモリ（テスト）
-- Vite
+| 区分 | 内容 |
+| --- | --- |
+| 言語 | PHP 8.4+ |
+| フレームワーク | Laravel 13 / Filament 5 / Sanctum 4 |
+| フロントエンド | Vite 6 + Tailwind CSS 4 |
+| データベース | MySQL（開発・本番） / SQLite インメモリ（テスト） |
+| 実行環境 | Laravel Sail（Docker） |
 
-## セットアップ
+## クイックスタート
 
-ローカルに PHP / composer / Node を入れる必要はありません。Docker（Docker Desktop / OrbStack 等）だけ用意してください。
-
-```bash
-# 1. 依存をインストール（PHP/composer をコンテナで実行）
-docker run --rm \
-  -v "$(pwd):/var/www/html" \
-  -w /var/www/html \
-  laravelsail/php84-composer:latest \
-  composer install --ignore-platform-reqs
-
-# 2. 環境ファイルをコピー
-cp .env.example .env
-
-# 3. Sail 起動（PHP / MySQL / Redis のコンテナ群を立ち上げ）
-./vendor/bin/sail up -d
-
-# 4. コンテナ内でアプリ初期化
-./vendor/bin/sail artisan key:generate
-./vendor/bin/sail artisan migrate
-./vendor/bin/sail npm install
-```
-
-以降は `./vendor/bin/sail <cmd>` で各種ツールを実行できます。よく使うエイリアスを `~/.zshrc` に入れておくと楽です。
+必要なのは Docker（Docker Desktop / OrbStack 等）と `make` だけです。
 
 ```bash
-alias sail='[ -f sail ] && sh sail || sh vendor/bin/sail'
+make setup
 ```
 
-### Git フック (Lefthook)
-
-`lefthook.yml` で pre-commit / pre-push フックを管理しています。フック内のコマンドはすべて Sail 経由でコンテナ内実行されるため、ローカルに PHP は不要です（コンテナが起動している必要はあります）。
-
-初回のみ:
-
-```bash
-brew install lefthook    # 未導入の場合
-lefthook install         # .git/hooks にフックを登録
-```
-
-- **pre-commit**: ステージ済み PHP ファイルに `sail bin php-cs-fixer fix` と `sail bin phpcs` を実行
-- **pre-push**: `sail composer build`（csf + cs + sa + md）でフル静的解析
-
-> フック実行前に `./vendor/bin/sail up -d` でコンテナを起動しておいてください。停止中だとフックが失敗します。
-
-## 開発
-
-```bash
-npm run dev         # 開発ビルド（watch）
-npm run build       # 本番ビルド
-```
+`make help` で全ターゲットを確認できます。
 
 ## テスト
 
-`phpunit.xml` で SQLite インメモリを使用するよう設定されているため、追加のセットアップなしでテストを実行できます。
+`phpunit.xml` で SQLite インメモリを使う設定のため、追加のセットアップは不要です。
 
 ```bash
-composer test                            # 全テスト
-./vendor/bin/phpunit --filter=ClassName  # 特定クラス
+make test
 ```
 
-### MySQL を利用した結合テストを行う場合
+<details>
+<summary>MySQL を使った結合テストを行う場合</summary>
 
-`.env.testing` の DB 設定に合わせて、MySQL 側にデータベースとユーザーを用意してください。
+`.env.testing` の DB 設定に合わせ、MySQL 側にデータベースとユーザーを用意します。
 
 ```sql
 CREATE SCHEMA testing;
@@ -90,17 +48,21 @@ CREATE USER 'sail'@'%' IDENTIFIED BY 'password';
 GRANT ALL ON testing.* TO 'sail'@'%';
 ```
 
-## コード品質
+</details>
 
-| コマンド | 内容 |
-| --- | --- |
-| `composer csf` | PHP CS Fixer（dry-run） |
-| `composer csf-fix` | PHP CS Fixer（自動修正） |
-| `composer cs` | PHP CodeSniffer |
-| `composer cs-fix` | PHP CodeSniffer（自動修正） |
-| `composer sa` | Larastan / PHPStan |
-| `composer md` | PHPMD |
-| `composer build` | csf + cs + sa + md |
-| `composer tests` | build + test |
+## Git フック
 
-コミット前に `composer tests` がグリーンになることを確認してください。
+`lefthook.yml` で pre-commit / pre-push を Sail 経由で管理しています（コンテナ起動が前提）。初回のみ:
+
+```bash
+brew install lefthook
+lefthook install
+```
+
+## Security
+
+脆弱性を発見した場合は [GitHub Issues](https://github.com/yabutayukinari/type89/issues) でご報告ください。
+
+## License
+
+[MIT](LICENSE)
