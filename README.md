@@ -5,6 +5,7 @@
 [![codecov](https://codecov.io/gh/yabutayukinari/type89/branch/main/graph/badge.svg)](https://codecov.io/gh/yabutayukinari/type89)
 [![PHP](https://img.shields.io/badge/php-%5E8.4-777bb4)](https://www.php.net/)
 [![Laravel](https://img.shields.io/badge/laravel-13-ff2d20)](https://laravel.com/)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
 Laravel をベースにしたユーザー管理アプリケーションのプラクティス用リポジトリです。
 
