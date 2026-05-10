@@ -2,9 +2,12 @@
 
 use App\Http\Controllers\Api\Admin\AuthController as AdminAuthController;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\BroadcastTestController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/health', static fn () => response()->json(['status' => 'ok']))->name('api.health');
+
+Route::post('/broadcast-test', BroadcastTestController::class)->name('api.broadcast-test');
 
 Route::post('/login', [AuthController::class, 'login'])->name('api.login');
 Route::middleware('auth:web')->group(static function (): void {
