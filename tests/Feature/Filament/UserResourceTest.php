@@ -7,6 +7,7 @@ use App\Filament\Resources\UserResource\Pages\CreateUser;
 use App\Filament\Resources\UserResource\Pages\EditUser;
 use App\Filament\Resources\UserResource\Pages\ListUsers;
 use App\Filament\Resources\UserResource\Pages\ViewUser;
+use App\Models\Admin;
 use App\Models\User;
 use Filament\Actions\DeleteAction;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -17,22 +18,22 @@ class UserResourceTest extends TestCase
 {
     use RefreshDatabase;
 
-    private User $adminUser;
+    private Admin $admin;
 
     protected function setUp(): void
     {
         parent::setUp();
 
-        /** @var User $user */
-        $user = User::factory()->create([
+        /** @var Admin $admin */
+        $admin = Admin::factory()->generalAdmin()->create([
             'email_verified_at' => now(),
         ]);
-        $this->adminUser = $user;
+        $this->admin = $admin;
     }
 
     public function testCanRenderListPage(): void
     {
-        $this->actingAs($this->adminUser);
+        $this->actingAs($this->admin, 'admin');
 
         $this->get(UserResource::getUrl('index'))
             ->assertSuccessful();
@@ -40,7 +41,7 @@ class UserResourceTest extends TestCase
 
     public function testCanRenderCreatePage(): void
     {
-        $this->actingAs($this->adminUser);
+        $this->actingAs($this->admin, 'admin');
 
         $this->get(UserResource::getUrl('create'))
             ->assertSuccessful();
@@ -48,7 +49,7 @@ class UserResourceTest extends TestCase
 
     public function testCanRenderEditPage(): void
     {
-        $this->actingAs($this->adminUser);
+        $this->actingAs($this->admin, 'admin');
 
         $user = User::factory()->create();
 
@@ -58,7 +59,7 @@ class UserResourceTest extends TestCase
 
     public function testCanRenderViewPage(): void
     {
-        $this->actingAs($this->adminUser);
+        $this->actingAs($this->admin, 'admin');
 
         /** @var User $user */
         $user = User::factory()->create();
@@ -69,7 +70,7 @@ class UserResourceTest extends TestCase
 
     public function testCanViewUser(): void
     {
-        $this->actingAs($this->adminUser);
+        $this->actingAs($this->admin, 'admin');
 
         /** @var User $user */
         $user = User::factory()->create([
@@ -83,7 +84,7 @@ class UserResourceTest extends TestCase
 
     public function testCanListUsers(): void
     {
-        $this->actingAs($this->adminUser);
+        $this->actingAs($this->admin, 'admin');
 
         $users = User::factory()->count(3)->create();
 
@@ -93,7 +94,7 @@ class UserResourceTest extends TestCase
 
     public function testCanCreateUser(): void
     {
-        $this->actingAs($this->adminUser);
+        $this->actingAs($this->admin, 'admin');
 
         $newUserData = [
             'name' => 'New User',
@@ -114,7 +115,7 @@ class UserResourceTest extends TestCase
 
     public function testCanUpdateUser(): void
     {
-        $this->actingAs($this->adminUser);
+        $this->actingAs($this->admin, 'admin');
 
         /** @var User $user */
         $user = User::factory()->create();
@@ -136,7 +137,7 @@ class UserResourceTest extends TestCase
 
     public function testCanDeleteUser(): void
     {
-        $this->actingAs($this->adminUser);
+        $this->actingAs($this->admin, 'admin');
 
         /** @var User $user */
         $user = User::factory()->create();
@@ -151,7 +152,7 @@ class UserResourceTest extends TestCase
 
     public function testCanValidateCreateInput(): void
     {
-        $this->actingAs($this->adminUser);
+        $this->actingAs($this->admin, 'admin');
 
         Livewire::test(CreateUser::class)
             ->fillForm([

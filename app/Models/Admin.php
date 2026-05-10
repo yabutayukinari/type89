@@ -2,16 +2,25 @@
 
 namespace App\Models;
 
+use App\Enums\AdminRole;
 use Database\Factories\AdminFactory;
+use Filament\Models\Contracts\FilamentUser;
+use Filament\Models\Contracts\HasName;
+use Filament\Panel;
+use Illuminate\Auth\Passwords\CanResetPassword as CanResetPasswordTrait;
+use Illuminate\Contracts\Auth\CanResetPassword;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Auth;
 
 /** @use HasFactory<AdminFactory> */
-class Admin extends Model
+class Admin extends Authenticatable implements CanResetPassword, FilamentUser, HasName, MustVerifyEmail
 {
     /** @use HasFactory<AdminFactory> */
-    use HasFactory, SoftDeletes;
+    use CanResetPasswordTrait, HasFactory, Notifiable, SoftDeletes;
 
     /**
      * The attributes that are mass assignable.
@@ -22,6 +31,7 @@ class Admin extends Model
         'name',
         'email',
         'password',
+        'role',
         'last_login_at',
         'email_verified_at',
     ];
@@ -43,7 +53,30 @@ class Admin extends Model
      */
     protected $casts = [
         'id' => 'integer',
+        'role' => AdminRole::class,
         'last_login_at' => 'datetime',
         'email_verified_at' => 'datetime',
     ];
+
+    public function canAccessPanel(Panel $panel): bool
+    {
+        return $panel->getId() === 'admin';
+    }
+
+    public function getFilamentName(): string
+    {
+        return $this->name ?? $this->email;
+    }
+
+    public function isSystemAdmin(): bool
+    {
+        return $this->role === AdminRole::SystemAdmin;
+    }
+
+    public static function isSystemAdminLoggedIn(): bool
+    {
+        $user = Auth::guard('admin')->user();
+
+        return $user instanceof self && $user->isSystemAdmin();
+    }
 }
