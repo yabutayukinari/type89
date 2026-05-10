@@ -47,7 +47,7 @@ export default function Home() {
         )}
       </section>
 
-      <nav className="flex gap-4 text-sm">
+      <nav className="flex flex-wrap justify-center gap-4 text-sm">
         <Link
           href="/login"
           className="rounded border border-zinc-300 px-4 py-2 dark:border-zinc-700"
@@ -59,6 +59,12 @@ export default function Home() {
           className="rounded border border-zinc-300 px-4 py-2 dark:border-zinc-700"
         >
           Admin ログイン
+        </Link>
+        <Link
+          href="/broadcast-test"
+          className="rounded border border-zinc-300 px-4 py-2 dark:border-zinc-700"
+        >
+          Broadcast 動作確認
         </Link>
       </nav>
     </main>
