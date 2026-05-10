@@ -61,8 +61,8 @@ setup: ## One-shot bootstrap (idempotent)
 		echo "==> generating APP_KEY for .env.testing"; \
 		$(SAIL) artisan key:generate --env=testing --force; \
 	fi
-	@echo "==> running migrations"
-	@$(SAIL) artisan migrate
+	@echo "==> running migrations & seeders"
+	@$(SAIL) artisan migrate --seed
 	@if [ ! -d node_modules ]; then \
 		echo "==> npm install"; \
 		$(SAIL) npm install; \
@@ -70,6 +70,11 @@ setup: ## One-shot bootstrap (idempotent)
 		echo "==> node_modules/ exists, skipping npm install"; \
 	fi
 	@echo "==> setup complete"
+	@echo ""
+	@echo "  App:        http://localhost"
+	@echo "  Admin:      http://localhost/admin"
+	@echo "  Login user: test_user@example.com / test1111"
+	@echo ""
 
 up: ## Start Sail containers
 	@$(SAIL) up -d

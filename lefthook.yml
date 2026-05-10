@@ -3,7 +3,7 @@ pre-commit:
   commands:
     php-cs-fixer:
       glob: "*.php"
-      run: ./vendor/bin/sail bin php-cs-fixer fix {staged_files}
+      run: ./vendor/bin/sail bin php-cs-fixer fix --config=.php-cs-fixer.dist.php {staged_files}
       stage_fixed: true
     phpcs:
       glob: "*.php"
