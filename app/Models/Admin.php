@@ -4,9 +4,6 @@ namespace App\Models;
 
 use App\Enums\AdminRole;
 use Database\Factories\AdminFactory;
-use Filament\Models\Contracts\FilamentUser;
-use Filament\Models\Contracts\HasName;
-use Filament\Panel;
 use Illuminate\Auth\Passwords\CanResetPassword as CanResetPasswordTrait;
 use Illuminate\Contracts\Auth\CanResetPassword;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
@@ -17,7 +14,7 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Auth;
 
 /** @use HasFactory<AdminFactory> */
-class Admin extends Authenticatable implements CanResetPassword, FilamentUser, HasName, MustVerifyEmail
+class Admin extends Authenticatable implements CanResetPassword, MustVerifyEmail
 {
     /** @use HasFactory<AdminFactory> */
     use CanResetPasswordTrait, HasFactory, Notifiable, SoftDeletes;
@@ -57,16 +54,6 @@ class Admin extends Authenticatable implements CanResetPassword, FilamentUser, H
         'last_login_at' => 'datetime',
         'email_verified_at' => 'datetime',
     ];
-
-    public function canAccessPanel(Panel $panel): bool
-    {
-        return $panel->getId() === 'admin';
-    }
-
-    public function getFilamentName(): string
-    {
-        return $this->name ?? $this->email;
-    }
 
     public function isSystemAdmin(): bool
     {
