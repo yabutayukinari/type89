@@ -55,7 +55,10 @@
       <property name="maximum" value="25" />
     </properties>
   </rule>
-  <rule ref="rulesets/unusedcode.xml" />
+  <rule ref="rulesets/unusedcode.xml">
+    <!-- UnusedFormalParameter conflicts with framework contracts (Resource::toArray, etc.) -->
+    <exclude name="UnusedFormalParameter" />
+  </rule>
   <!-- <exclude-pattern>*.blade.php</exclude-pattern> -->
   <exclude-pattern>_ide_helper.php</exclude-pattern>
   <exclude-pattern>*.twig.php</exclude-pattern>
