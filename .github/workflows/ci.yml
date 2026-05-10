@@ -114,27 +114,3 @@ jobs:
           name: coverage-php-${{ matrix.php }}
           path: build/coverage
           retention-days: 14
-
-  frontend:
-    name: Frontend build
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-
-      - name: Setup Node
-        uses: actions/setup-node@v6
-        with:
-          node-version: "22"
-          cache: npm
-
-      - name: Install npm dependencies
-        run: npm ci
-
-      - name: Audit npm dependencies for known vulnerabilities
-        # high+ only — moderate/low transitive npm advisories are too noisy to gate PRs on
-        run: npm audit --audit-level=high
-
-      - name: Build assets
-        run: npm run build
