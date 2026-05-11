@@ -136,4 +136,51 @@ class BidTest extends TestCase
 
         $response->assertStatus(401);
     }
+
+    public function testBidValidatesAmountRequired(): void
+    {
+        $auction = Auction::factory()->create();
+        $bidder = User::factory()->create();
+
+        $response = $this->actingAs($bidder)->postJson(
+            "/api/auctions/{$auction->id}/bids",
+            [],
+        );
+
+        $response->assertStatus(422)
+            ->assertJsonValidationErrors(['amount']);
+    }
+
+    public function testBidValidatesAmountIsPositiveInteger(): void
+    {
+        $auction = Auction::factory()->create();
+        $bidder = User::factory()->create();
+
+        $response = $this->actingAs($bidder)->postJson(
+            "/api/auctions/{$auction->id}/bids",
+            ['amount' => 0],
+        );
+
+        $response->assertStatus(422)
+            ->assertJsonValidationErrors(['amount']);
+    }
+
+    public function testFirstBidMustMeetStartingPrice(): void
+    {
+        $auction = Auction::factory()->create([
+            'starting_price' => 1000,
+            'bid_increment' => 100,
+            'current_price' => 1000,
+            'current_winner_user_id' => null,
+        ]);
+        $bidder = User::factory()->create();
+
+        $response = $this->actingAs($bidder)->postJson(
+            "/api/auctions/{$auction->id}/bids",
+            ['amount' => 999],
+        );
+
+        $response->assertStatus(422)
+            ->assertJsonValidationErrors(['amount']);
+    }
 }
