@@ -7,16 +7,16 @@
 [![Laravel](https://img.shields.io/badge/laravel-13-ff2d20)](https://laravel.com/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
-ユーザー管理を題材にした、Laravel / Filament の個人プラクティス用リポジトリです。Laravel Sail で完結するため、ローカルに PHP / Composer / Node を入れる必要はありません。
+ユーザー管理・オークションを題材にした、Laravel API + Next.js SPA の個人プラクティス用リポジトリです。バックエンドは Laravel Sail で完結するため、ローカルに PHP / Composer は不要です（フロントエンドの `frontend/` のみ Node が必要）。
 
 ## 技術スタック
 
 | 区分 | 内容 |
 | --- | --- |
 | 言語 | PHP 8.4+ |
-| フレームワーク | Laravel 13 / Filament 5 / Sanctum 4 |
-| フロントエンド | Vite 6 + Tailwind CSS 4 |
-| データベース | MySQL（開発・本番） / SQLite インメモリ（テスト） |
+| バックエンド | Laravel 13 / Sanctum 4（SPA 認証）/ Reverb 1（WebSocket） |
+| フロントエンド | Next.js（`frontend/` に分離） |
+| データベース | MySQL（開発）/ MySQL 8 on tmpfs（テスト） |
 | 実行環境 | Laravel Sail（Docker） |
 
 ## クイックスタート
