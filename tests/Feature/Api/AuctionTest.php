@@ -29,6 +29,18 @@ class AuctionTest extends TestCase
             ->assertJsonCount(3, 'data');
     }
 
+    public function testIndexOrdersByIdDescending(): void
+    {
+        $first = Auction::factory()->create();
+        $second = Auction::factory()->create();
+        $third = Auction::factory()->create();
+
+        $response = $this->getJson('/api/auctions');
+
+        $ids = array_column($response->json('data'), 'id');
+        $this->assertSame([$third->id, $second->id, $first->id], $ids);
+    }
+
     public function testShowReturnsSingleAuction(): void
     {
         $auction = Auction::factory()->create();
@@ -43,6 +55,41 @@ class AuctionTest extends TestCase
                     'status' => 'active',
                 ],
             ]);
+    }
+
+    public function testShowReturnsPendingStatusBeforeStart(): void
+    {
+        $auction = Auction::factory()->pending()->create();
+
+        $response = $this->getJson("/api/auctions/{$auction->id}");
+
+        $response->assertOk()
+            ->assertJsonPath('data.status', 'pending');
+    }
+
+    public function testShowReturnsEndedStatusAfterEnd(): void
+    {
+        $auction = Auction::factory()->ended()->create();
+
+        $response = $this->getJson("/api/auctions/{$auction->id}");
+
+        $response->assertOk()
+            ->assertJsonPath('data.status', 'ended');
+    }
+
+    public function testShowIncludesCurrentWinnerWhenPresent(): void
+    {
+        $winner = User::factory()->create(['name' => 'Winner Jane']);
+        $auction = Auction::factory()->create([
+            'current_winner_user_id' => $winner->id,
+            'current_price' => 5000,
+        ]);
+
+        $response = $this->getJson("/api/auctions/{$auction->id}");
+
+        $response->assertOk()
+            ->assertJsonPath('data.current_winner.id', $winner->id)
+            ->assertJsonPath('data.current_winner.name', 'Winner Jane');
     }
 
     public function testStoreCreatesAuctionForAuthenticatedUser(): void
