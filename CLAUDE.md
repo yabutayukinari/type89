@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a Laravel 13 project with PHP 8.4+ that demonstrates Laravel best practices. The project includes a user management system with admin controllers (including a Filament admin panel) and comprehensive static analysis tools.
+This is a Laravel 13 project with PHP 8.4+ that demonstrates Laravel best practices. The project serves as an API backend (Sanctum SPA auth + Reverb broadcasting) for a Next.js frontend located in `frontend/`. It includes a user management API with admin controllers and comprehensive static analysis tools.
 
 ## Common Commands
 
@@ -23,10 +23,8 @@ The project runs entirely inside Laravel Sail containers — local PHP / Compose
 - `make fix` - Auto-fix code style (PHP CS Fixer + PHP CodeSniffer)
 - `make migrate` - Run pending migrations
 
-### Development
-- `./vendor/bin/sail npm install` - Install JavaScript dependencies
-- `./vendor/bin/sail npm run dev` - Start Vite dev server (with HMR)
-- `./vendor/bin/sail npm run build` - Production build of assets
+### Frontend
+The Next.js frontend lives in a separate directory (`frontend/`) and is run independently from Sail. See `frontend/CLAUDE.md` for its commands.
 
 ### Testing and Quality Assurance
 - `./vendor/bin/sail composer test` - Run all tests (or `make test`)
@@ -64,7 +62,7 @@ Tests run against the dedicated `mysql.test` Sail container (MySQL 8 on tmpfs fo
   - `Unit/` - Unit tests
 - `database/` - Database migrations, seeders, and factories
 - `routes/` - Route definitions
-- `resources/` - Blade views and frontend assets
+- `resources/` - Localization files (`lang/`); the frontend lives in `frontend/`
 
 ### Code Quality Standards
 
@@ -80,26 +78,25 @@ Tests run against the dedicated `mysql.test` Sail container (MySQL 8 on tmpfs fo
 
 **Testing:**
 - PHPUnit 12 for unit and feature tests
-- SQLite in-memory database for test isolation
+- Dedicated `mysql.test` Sail container (MySQL 8 on tmpfs) for test isolation
 - Base test case in `tests/TestCase.php` with Laravel testing utilities
 - Laravel test assertions included via `jasonmccreary/laravel-test-assertions`
 
 ### Key Technology Stack
 - **Framework:** Laravel 13
 - **Language:** PHP 8.4+
-- **Admin Panel:** Filament 5
-- **Authentication:** Laravel Sanctum 4 for API token authentication
-- **Frontend Build:** Vite 6 (with `laravel-vite-plugin` and Tailwind CSS 4)
-- **Database:** MySQL (configured) with SQLite for testing
-- **Dependencies:** Guzzle HTTP client, Laravel UI for scaffolding
+- **Authentication:** Laravel Sanctum 4 (SPA / API token authentication)
+- **Realtime:** Laravel Reverb 1 (WebSocket broadcasting)
+- **Database:** MySQL (dev) / dedicated MySQL container (test)
+- **Dependencies:** Guzzle HTTP client
+- **Frontend:** Next.js (separate `frontend/` directory)
 
 ### Admin and User Management
-The application includes an admin user management system:
-- `app/Http/Controllers/Admin/UserController.php` - Admin user CRUD operations
-- `app/Http/Requests/UserUpdateRequest.php` - User update validation
-- `app/Models/User.php`, `app/Models/Admin.php` - User models with authentication
+The application exposes an admin user management API:
+- `app/Http/Controllers/Api/Admin/` - Admin user CRUD operations (API)
+- `app/Http/Requests/Api/` - API form request validation
+- `app/Models/User.php`, `app/Models/Admin.php` - User models with multi-guard authentication (`web` / `admin`)
 - Role-based access control configured in middleware and route middleware
-- Filament panel for admin operations alongside the Blade-based admin views
 
 ### Development Workflow
 
@@ -115,10 +112,9 @@ The application includes an admin user management system:
    - Configure `.env` file for local development
    - Apply migrations with `make migrate`
 
-3. **Frontend asset changes:**
-   - Edit assets in `resources/`
-   - Run `./vendor/bin/sail npm run dev` during development
-   - Run `./vendor/bin/sail npm run build` before deployment
+3. **Frontend changes:**
+   - Edit the Next.js app under `frontend/`
+   - See `frontend/CLAUDE.md` for dev / build commands
 
 4. **Testing approach:**
    - Feature tests for HTTP endpoints and workflows
@@ -128,6 +124,6 @@ The application includes an admin user management system:
 ## Important Notes
 
 - The project enforces strict coding standards. All code must pass static analysis before being merged.
-- Tests are configured to run against an in-memory SQLite database for speed and isolation.
+- Tests run against the dedicated `mysql.test` Sail container (MySQL 8 on tmpfs for speed and isolation).
 - PHP 8.4+ type declarations are expected throughout the codebase.
 - The application uses Laravel Sanctum for API authentication; refer to `laravel/sanctum` documentation for API token management.
