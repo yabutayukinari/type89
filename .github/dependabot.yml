@@ -16,9 +16,15 @@ updates:
         update-types:
           - minor
           - patch
+    # 公開直後の悪意あるバージョンを掴まないよう、レピュテーション猶予を入れる
+    cooldown:
+      default-days: 7
+      semver-major-days: 30
+      semver-minor-days: 7
+      semver-patch-days: 3
 
   - package-ecosystem: npm
-    directory: "/"
+    directory: "/frontend"
     schedule:
       interval: weekly
       day: monday
@@ -33,6 +39,11 @@ updates:
         update-types:
           - minor
           - patch
+    cooldown:
+      default-days: 7
+      semver-major-days: 30
+      semver-minor-days: 7
+      semver-patch-days: 3
 
   - package-ecosystem: github-actions
     directory: "/"
@@ -49,3 +60,8 @@ updates:
         update-types:
           - minor
           - patch
+    cooldown:
+      default-days: 7
+      semver-major-days: 30
+      semver-minor-days: 7
+      semver-patch-days: 3
