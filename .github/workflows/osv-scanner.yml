@@ -1,0 +1,46 @@
+name: OSV-Scanner
+
+# composer audit (Packagist Advisory DB) / npm audit (GitHub Advisory DB) と
+# データソースをずらして二重化する。OSV は両 DB + OSS-Fuzz / RustSec 等を
+# 横断するため、片方の DB に未登録の advisory を拾える。
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: "17 5 * * 1"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  scan-scheduled:
+    if: ${{ github.event_name == 'push' || github.event_name == 'schedule' }}
+    uses: google/osv-scanner-action/.github/workflows/osv-scanner-reusable.yml@9a498708959aeaef5ef730655706c5a1df1edbc2 # v2.3.8
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+    with:
+      scan-args: |-
+        -r
+        ./
+
+  scan-pr:
+    if: ${{ github.event_name == 'pull_request' }}
+    uses: google/osv-scanner-action/.github/workflows/osv-scanner-reusable-pr.yml@9a498708959aeaef5ef730655706c5a1df1edbc2 # v2.3.8
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+      pull-requests: read
+    with:
+      scan-args: |-
+        -r
+        ./
