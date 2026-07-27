@@ -9,6 +9,7 @@ use App\Http\Resources\BidResource;
 use App\Models\Auction;
 use App\Models\Bid;
 use App\Models\User;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -16,6 +17,22 @@ use Illuminate\Validation\ValidationException;
 
 class BidController extends Controller
 {
+    /**
+     * オークションの入札履歴を新しい順に返す。
+     *
+     * リアルタイム配信 (BidPlaced) は接続後に届いた入札しか扱えないため、
+     * ページを開いた直後に過去の入札を描画するにはこの取得 API が必要になる。
+     */
+    public function index(Auction $auction): AnonymousResourceCollection
+    {
+        $bids = $auction->bids()
+            ->with('bidder')
+            ->orderByDesc('id')
+            ->get();
+
+        return BidResource::collection($bids);
+    }
+
     public function store(PlaceBidRequest $request, Auction $auction): JsonResource
     {
         /** @var User $bidder */

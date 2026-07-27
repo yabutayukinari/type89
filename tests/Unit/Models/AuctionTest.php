@@ -63,4 +63,23 @@ class AuctionTest extends TestCase
 
         $this->assertSame(1600, $auction->minNextBid());
     }
+
+    public function testIsSettledReflectsSettledAt(): void
+    {
+        $auction = Auction::factory()->create(['settled_at' => null]);
+        $this->assertFalse($auction->isSettled());
+
+        $auction->forceFill(['settled_at' => Carbon::now()])->save();
+        $this->assertTrue($auction->isSettled());
+    }
+
+    public function testHasWinnerReflectsCurrentWinner(): void
+    {
+        $auction = Auction::factory()->create(['current_winner_user_id' => null]);
+        $this->assertFalse($auction->hasWinner());
+
+        $winner = User::factory()->create();
+        $auction->forceFill(['current_winner_user_id' => $winner->id])->save();
+        $this->assertTrue($auction->hasWinner());
+    }
 }

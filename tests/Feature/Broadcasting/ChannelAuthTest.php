@@ -45,6 +45,14 @@ class ChannelAuthTest extends TestCase
         $this->assertTrue($callback(null, 42));
     }
 
+    public function testAuctionPresenceChannelReturnsMemberInfoForAuthenticatedUser(): void
+    {
+        $user = User::factory()->create(['name' => 'Alice']);
+        $callback = $this->registeredChannels()['auction-presence.{auctionId}'];
+
+        $this->assertSame(['id' => $user->id, 'name' => 'Alice'], $callback($user, 7));
+    }
+
     public function testUserChannelAuthorizesMatchingUser(): void
     {
         $user = User::factory()->create();

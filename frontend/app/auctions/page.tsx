@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
+import { AuctionCountdown } from '@/components/AuctionCountdown';
 import { Auction, fetchAuctions } from '@/lib/auctions';
 
 export default function AuctionsListPage() {
@@ -68,7 +69,10 @@ export default function AuctionsListPage() {
                 <strong>{a.current_price.toLocaleString()}</strong> 円
               </span>
             </Link>
-            <p className="mt-1 truncate text-xs text-zinc-500">出品者: {a.seller.name}</p>
+            <div className="mt-1 flex items-center justify-between gap-4">
+              <p className="truncate text-xs text-zinc-500">出品者: {a.seller.name}</p>
+              <AuctionCountdown endsAt={a.ends_at} status={a.status} />
+            </div>
           </li>
         ))}
       </ul>

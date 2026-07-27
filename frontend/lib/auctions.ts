@@ -50,6 +50,11 @@ export const fetchAuction = async (id: number): Promise<Auction> => {
   return response.data.data;
 };
 
+export const fetchBids = async (auctionId: number): Promise<Bid[]> => {
+  const response = await api.get<{ data: Bid[] }>(`/api/auctions/${auctionId}/bids`);
+  return response.data.data;
+};
+
 export type CreateAuctionInput = {
   title: string;
   description: string;
