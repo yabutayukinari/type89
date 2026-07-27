@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
+import { NotificationsPanel } from '@/components/NotificationsPanel';
 import { logoutUser, useUser } from '@/lib/auth';
 
 export default function UserDashboardPage() {
@@ -30,7 +31,7 @@ export default function UserDashboardPage() {
   };
 
   return (
-    <main className="mx-auto mt-16 flex w-full max-w-md flex-col gap-4 rounded-lg border border-zinc-300 bg-white p-8 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
+    <main className="mx-auto mt-16 flex w-full max-w-md flex-col gap-6 rounded-lg border border-zinc-300 bg-white p-8 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
       <h1 className="text-2xl font-semibold">User ダッシュボード</h1>
       <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
         <dt className="text-zinc-500">id</dt>
@@ -40,10 +41,15 @@ export default function UserDashboardPage() {
         <dt className="text-zinc-500">email</dt>
         <dd>{auth.principal.email}</dd>
       </dl>
+
+      <hr className="border-zinc-200 dark:border-zinc-800" />
+
+      <NotificationsPanel userId={auth.principal.id} />
+
       <button
         type="button"
         onClick={handleLogout}
-        className="mt-4 rounded border border-zinc-300 px-4 py-2 text-base font-medium dark:border-zinc-700"
+        className="mt-2 rounded border border-zinc-300 px-4 py-2 text-base font-medium dark:border-zinc-700"
       >
         ログアウト
       </button>

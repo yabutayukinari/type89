@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\AuctionController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BidController;
 use App\Http\Controllers\Api\BroadcastTestController;
+use App\Http\Controllers\Api\NotificationController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/health', static fn () => response()->json(['status' => 'ok']))->name('api.health');
@@ -13,6 +14,7 @@ Route::post('/broadcast-test', BroadcastTestController::class)->name('api.broadc
 
 Route::get('/auctions', [AuctionController::class, 'index'])->name('api.auctions.index');
 Route::get('/auctions/{auction}', [AuctionController::class, 'show'])->name('api.auctions.show');
+Route::get('/auctions/{auction}/bids', [BidController::class, 'index'])->name('api.auctions.bids.index');
 Route::middleware('auth:web')->group(static function (): void {
     Route::post('/auctions', [AuctionController::class, 'store'])->name('api.auctions.store');
     Route::post('/auctions/{auction}/bids', [BidController::class, 'store'])->name('api.auctions.bids.store');
@@ -22,6 +24,8 @@ Route::post('/login', [AuthController::class, 'login'])->name('api.login');
 Route::middleware('auth:web')->group(static function (): void {
     Route::post('/logout', [AuthController::class, 'logout'])->name('api.logout');
     Route::get('/me', [AuthController::class, 'me'])->name('api.me');
+    Route::get('/notifications', [NotificationController::class, 'index'])->name('api.notifications.index');
+    Route::post('/notifications/read', [NotificationController::class, 'markAllRead'])->name('api.notifications.read');
 });
 
 Route::prefix('admin')->name('api.admin.')->group(static function (): void {

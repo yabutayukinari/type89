@@ -62,4 +62,16 @@ class User extends Authenticatable implements MustVerifyEmail
         'last_login_at' => 'datetime',
         'email_verified_at' => 'datetime',
     ];
+
+    /**
+     * ブロードキャスト通知の配信先チャンネル名。
+     *
+     * デフォルトの App.Models.User.{id} ではなく、routes/channels.php で
+     * 既に認可済みの user.{id} private チャンネルに合わせることで、
+     * 認可ロジックとフロントの購読先を一本化する。
+     */
+    public function receivesBroadcastNotificationsOn(): string
+    {
+        return 'user.'.$this->id;
+    }
 }

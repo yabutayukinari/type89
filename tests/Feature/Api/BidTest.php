@@ -5,6 +5,7 @@ namespace Tests\Feature\Api;
 use App\Events\BidPlaced;
 use App\Http\Middleware\VerifyCsrfToken;
 use App\Models\Auction;
+use App\Models\Bid;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
@@ -19,6 +20,33 @@ class BidTest extends TestCase
         parent::setUp();
         $this->withoutMiddleware(VerifyCsrfToken::class);
         $this->withHeader('Origin', 'http://localhost:3000');
+    }
+
+    public function testIndexReturnsBidsNewestFirst(): void
+    {
+        $auction = Auction::factory()->create();
+        $first = Bid::factory()->for($auction)->create(['amount' => 1000]);
+        $second = Bid::factory()->for($auction)->create(['amount' => 1200]);
+
+        $response = $this->getJson("/api/auctions/{$auction->id}/bids");
+
+        $response->assertOk()
+            ->assertJsonCount(2, 'data')
+            ->assertJsonPath('data.0.id', $second->id)
+            ->assertJsonPath('data.1.id', $first->id)
+            ->assertJsonPath('data.0.bidder.id', $second->bidder->id);
+    }
+
+    public function testIndexIsScopedToTheAuction(): void
+    {
+        $auction = Auction::factory()->create();
+        Bid::factory()->for($auction)->create();
+        $other = Auction::factory()->create();
+        Bid::factory()->for($other)->create();
+
+        $response = $this->getJson("/api/auctions/{$auction->id}/bids");
+
+        $response->assertOk()->assertJsonCount(1, 'data');
     }
 
     public function testPlaceBidSucceedsAndBroadcasts(): void

@@ -21,6 +21,7 @@ use Illuminate\Support\Carbon;
  * @property int|null $current_winner_user_id
  * @property Carbon $starts_at
  * @property Carbon $ends_at
+ * @property Carbon|null $settled_at
  *
  * @property-read User $seller
  * @property-read User|null $currentWinner
@@ -41,6 +42,7 @@ class Auction extends Model
         'current_winner_user_id',
         'starts_at',
         'ends_at',
+        'settled_at',
     ];
 
     /**
@@ -55,6 +57,7 @@ class Auction extends Model
         'current_winner_user_id' => 'integer',
         'starts_at' => 'datetime',
         'ends_at' => 'datetime',
+        'settled_at' => 'datetime',
     ];
 
     /**
@@ -102,6 +105,16 @@ class Auction extends Model
     public function isActive(): bool
     {
         return $this->status === 'active';
+    }
+
+    public function isSettled(): bool
+    {
+        return $this->settled_at !== null;
+    }
+
+    public function hasWinner(): bool
+    {
+        return $this->current_winner_user_id !== null;
     }
 
     public function minNextBid(): int
