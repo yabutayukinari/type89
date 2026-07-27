@@ -5,6 +5,8 @@ import { useEffect, useState } from 'react';
 import { AuctionCountdown } from '@/components/AuctionCountdown';
 import { Auction, fetchAuctions } from '@/lib/auctions';
 
+const yen = (n: number): string => `¥${n.toLocaleString('ja-JP')}`;
+
 export default function AuctionsListPage() {
   const [auctions, setAuctions] = useState<Auction[] | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -26,56 +28,68 @@ export default function AuctionsListPage() {
   }, []);
 
   return (
-    <main className="mx-auto mt-12 flex w-full max-w-3xl flex-col gap-4 p-6">
-      <header className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">オークション一覧</h1>
-        <Link
-          href="/auctions/new"
-          className="rounded bg-zinc-900 px-3 py-2 text-sm font-medium text-white dark:bg-zinc-100 dark:text-zinc-900"
-        >
-          出品する
-        </Link>
-      </header>
-
-      {error && (
-        <p role="alert" className="text-sm text-red-600 dark:text-red-400">
-          {error}
-        </p>
-      )}
-
-      {auctions === null && !error && (
-        <p className="text-sm text-zinc-600 dark:text-zinc-400">読み込み中...</p>
-      )}
-
-      {auctions !== null && auctions.length === 0 && (
-        <p className="text-sm text-zinc-600 dark:text-zinc-400">
-          まだオークションはありません
-        </p>
-      )}
-
-      <ul className="flex flex-col gap-3">
-        {auctions?.map((a) => (
-          <li
-            key={a.id}
-            className="rounded-lg border border-zinc-300 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900"
+    <main className="min-h-screen bg-zinc-950 text-zinc-100">
+      <div className="mx-auto flex w-full max-w-3xl flex-col gap-4 p-6 pt-10">
+        <header className="flex items-center justify-between">
+          <h1 className="text-2xl font-bold tracking-tight">オークション</h1>
+          <Link
+            href="/auctions/new"
+            className="rounded-lg bg-gradient-to-r from-orange-400 to-red-500 px-4 py-2 text-sm font-extrabold text-zinc-950 shadow-lg shadow-red-500/25 transition active:scale-[.99]"
           >
-            <Link
-              href={`/auctions/${a.id}`}
-              className="flex items-baseline justify-between gap-4"
-            >
-              <span className="font-medium">{a.title}</span>
-              <span className="text-sm text-zinc-500">
-                {a.status === 'active' ? '現在価格' : a.status === 'ended' ? '終了' : '開始前'}{' '}
-                <strong>{a.current_price.toLocaleString()}</strong> 円
-              </span>
-            </Link>
-            <div className="mt-1 flex items-center justify-between gap-4">
-              <p className="truncate text-xs text-zinc-500">出品者: {a.seller.name}</p>
-              <AuctionCountdown endsAt={a.ends_at} status={a.status} />
-            </div>
-          </li>
-        ))}
-      </ul>
+            出品する
+          </Link>
+        </header>
+
+        {error && (
+          <p role="alert" className="text-sm text-red-400">
+            {error}
+          </p>
+        )}
+
+        {auctions === null && !error && (
+          <p className="text-sm text-zinc-500">読み込み中...</p>
+        )}
+
+        {auctions !== null && auctions.length === 0 && (
+          <p className="text-sm text-zinc-500">まだオークションはありません</p>
+        )}
+
+        <ul className="flex flex-col gap-3">
+          {auctions?.map((a) => {
+            const isActive = a.status === 'active';
+            return (
+              <li key={a.id}>
+                <Link
+                  href={`/auctions/${a.id}`}
+                  className="block rounded-xl border border-zinc-800 bg-zinc-900/60 p-4 transition hover:border-zinc-700 hover:bg-zinc-900"
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        {isActive && (
+                          <span className="animate-live-pulse h-2 w-2 shrink-0 rounded-full bg-red-500" />
+                        )}
+                        <span className="truncate font-semibold">{a.title}</span>
+                      </div>
+                      <p className="mt-1 truncate text-xs text-zinc-500">
+                        出品者: {a.seller.name}
+                      </p>
+                    </div>
+                    <div className="shrink-0 text-right">
+                      <p className="text-lg font-black tabular-nums text-emerald-400">
+                        {yen(a.current_price)}
+                      </p>
+                      <div className="mt-0.5">
+                        <AuctionCountdown endsAt={a.ends_at} status={a.status} />
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
     </main>
   );
 }

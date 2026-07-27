@@ -24,3 +24,22 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* オークションのライブ演出 (案2: ライブ感&FOMO) */
+@keyframes live-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(255, 61, 45, 0.6); }
+  70% { box-shadow: 0 0 0 7px rgba(255, 61, 45, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(255, 61, 45, 0); }
+}
+@keyframes price-flash {
+  0%, 100% { color: inherit; }
+  40% { color: #3ddc84; }
+}
+.animate-live-pulse { animation: live-pulse 1.4s infinite; }
+/* 価格更新時に一瞬だけグリーンにフラッシュ */
+.price-flash { animation: price-flash 0.9s ease-in-out; }
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-live-pulse,
+  .price-flash { animation: none; }
+}
