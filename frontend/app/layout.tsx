@@ -30,8 +30,8 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col">
         <SiteHeader />
-        {/* モバイルは下部タブバーに隠れないよう余白を確保 */}
-        <div className="flex flex-1 flex-col pb-16 md:pb-0">{children}</div>
+        {/* モバイルは下部の浮遊ナビに隠れないよう余白を確保 */}
+        <div className="flex flex-1 flex-col pb-28 md:pb-0">{children}</div>
       </body>
     </html>
   );
