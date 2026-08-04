@@ -216,9 +216,14 @@ export default function Home() {
       <footer className="border-t border-zinc-900 px-5 py-6">
         <div className="mx-auto flex w-full max-w-5xl items-center justify-between text-xs text-zinc-600">
           <span>⚡ type89 Auctions</span>
-          <Link href="/admin/login" className="hover:text-zinc-400">
-            管理者ログイン
-          </Link>
+          <div className="flex gap-4">
+            <Link href="/auctions" className="hover:text-zinc-400">
+              オークション
+            </Link>
+            <Link href="/login" className="hover:text-zinc-400">
+              ログイン
+            </Link>
+          </div>
         </div>
       </footer>
     </main>
