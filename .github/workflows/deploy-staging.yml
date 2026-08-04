@@ -24,6 +24,8 @@ permissions:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    # AWS 側のセットアップ(変数設定)が済むまでは自動でスキップし、CI を汚さない
+    if: ${{ vars.AWS_DEPLOY_ROLE_ARN != '' }}
     environment: staging
     env:
       AWS_REGION: ${{ vars.AWS_REGION }}
