@@ -1,0 +1,16 @@
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+crash.*.log
+
+# 実値の tfvars は機密を含むためコミットしない（*.example は残す）
+*.tfvars
+!*.tfvars.example
+
+# override
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json

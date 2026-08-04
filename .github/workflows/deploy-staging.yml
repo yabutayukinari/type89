@@ -1,0 +1,107 @@
+name: Deploy staging
+
+# main へのマージでバックエンド(ECS)を自動デプロイする。
+# フロント(Amplify)は Amplify 側が push を検知して自動ビルドするため、ここでは扱わない。
+#
+# 必要な GitHub Actions Variables (Settings > Variables)。値は `terraform output` から取得:
+#   AWS_REGION, AWS_DEPLOY_ROLE_ARN, ECR_REPOSITORY, ECS_CLUSTER,
+#   ECS_WEB_SERVICE, ECS_REVERB_SERVICE, ECS_WEB_TASK_FAMILY, ECS_REVERB_TASK_FAMILY,
+#   ECS_SUBNETS (カンマ区切り), ECS_SECURITY_GROUP
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-staging
+  cancel-in-progress: false
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: staging
+    env:
+      AWS_REGION: ${{ vars.AWS_REGION }}
+      ECR_REPOSITORY: ${{ vars.ECR_REPOSITORY }}
+      ECS_CLUSTER: ${{ vars.ECS_CLUSTER }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build & push image
+        id: build
+        env:
+          REGISTRY: ${{ steps.ecr.outputs.registry }}
+        run: |
+          IMAGE="$REGISTRY/$ECR_REPOSITORY:${{ github.sha }}"
+          docker build -f docker/prod/Dockerfile -t "$IMAGE" .
+          docker push "$IMAGE"
+          echo "image=$IMAGE" >> "$GITHUB_OUTPUT"
+
+      - name: Deploy ECS services (web / reverb)
+        env:
+          IMAGE: ${{ steps.build.outputs.image }}
+        run: |
+          set -euo pipefail
+          deploy() {
+            local family="$1" service="$2"
+            echo "==> $service : register new task definition"
+            local td new rev
+            td=$(aws ecs describe-task-definition --task-definition "$family")
+            new=$(echo "$td" | jq --arg img "$IMAGE" '
+              .taskDefinition
+              | .containerDefinitions[0].image = $img
+              | {family, taskRoleArn, executionRoleArn, networkMode, containerDefinitions,
+                 requiresCompatibilities, cpu, memory, runtimePlatform}')
+            rev=$(aws ecs register-task-definition --cli-input-json "$new" \
+                  --query 'taskDefinition.taskDefinitionArn' --output text)
+            echo "    -> $rev"
+            aws ecs update-service --cluster "$ECS_CLUSTER" --service "$service" \
+              --task-definition "$rev" >/dev/null
+          }
+          deploy "${{ vars.ECS_WEB_TASK_FAMILY }}"    "${{ vars.ECS_WEB_SERVICE }}"
+          deploy "${{ vars.ECS_REVERB_TASK_FAMILY }}" "${{ vars.ECS_REVERB_SERVICE }}"
+
+      - name: Run database migrations (one-off task)
+        env:
+          IMAGE: ${{ steps.build.outputs.image }}
+        run: |
+          set -euo pipefail
+          # web タスク定義をベースに、コマンドを migrate に上書きした単発タスクを実行
+          td=$(aws ecs describe-task-definition --task-definition "${{ vars.ECS_WEB_TASK_FAMILY }}")
+          new=$(echo "$td" | jq --arg img "$IMAGE" '
+            .taskDefinition
+            | .containerDefinitions[0].image = $img
+            | .containerDefinitions[0].command = ["php","artisan","migrate","--force"]
+            | {family, taskRoleArn, executionRoleArn, networkMode, containerDefinitions,
+               requiresCompatibilities, cpu, memory, runtimePlatform}')
+          rev=$(aws ecs register-task-definition --cli-input-json "$new" \
+                --query 'taskDefinition.taskDefinitionArn' --output text)
+
+          subnets=$(echo "${{ vars.ECS_SUBNETS }}" | tr ',' ' ')
+          net="awsvpcConfiguration={subnets=[$(echo "$subnets" | tr ' ' ',')],securityGroups=[${{ vars.ECS_SECURITY_GROUP }}],assignPublicIp=ENABLED}"
+
+          arn=$(aws ecs run-task --cluster "$ECS_CLUSTER" --launch-type FARGATE \
+                --task-definition "$rev" --network-configuration "$net" \
+                --query 'tasks[0].taskArn' --output text)
+          echo "migration task: $arn"
+          aws ecs wait tasks-stopped --cluster "$ECS_CLUSTER" --tasks "$arn"
+
+          code=$(aws ecs describe-tasks --cluster "$ECS_CLUSTER" --tasks "$arn" \
+                 --query 'tasks[0].containers[0].exitCode' --output text)
+          echo "migration exit code: $code"
+          test "$code" = "0"
