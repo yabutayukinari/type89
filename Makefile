@@ -6,7 +6,7 @@ COMPOSER_BOOTSTRAP := docker run --rm \
 	composer install --ignore-platform-reqs
 
 .DEFAULT_GOAL := help
-.PHONY: help setup up down restart shell ps logs test build fix migrate
+.PHONY: help setup up down restart reverb shell ps logs test build fix migrate
 
 help: ## Show available targets
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "  \033[36m%-10s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -83,6 +83,9 @@ down: ## Stop Sail containers
 	@$(SAIL) down
 
 restart: down up ## Restart Sail containers
+
+reverb: ## Start the Reverb WebSocket server (foreground; needed for realtime)
+	@$(SAIL) artisan reverb:start
 
 shell: ## Shell into the app container
 	@$(SAIL) shell

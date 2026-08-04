@@ -21,13 +21,38 @@
 
 ## クイックスタート
 
+### 1. バックエンド（Laravel / Sail）
+
 必要なのは Docker（Docker Desktop / OrbStack 等）と `make` だけです。
 
 ```bash
 make setup
 ```
 
-`make help` で全ターゲットを確認できます。
+`.env` 生成・Sail 起動・マイグレーション・シードまで冪等に実行します（`make help` で全ターゲット）。完了後:
+
+- アプリ: <http://localhost>
+- 管理画面: <http://localhost/admin>
+- ログイン: `test_user@example.com` / `test1111`
+
+### 2. フロントエンド（Next.js）
+
+`frontend/` は Sail とは別に、ホストの Node で起動します。
+
+```bash
+cd frontend
+cp .env.example .env.local   # NEXT_PUBLIC_* の雛形（API / Reverb の接続先）
+npm install
+npm run dev                  # http://localhost:3000
+```
+
+### 3. リアルタイム（Reverb）
+
+入札・落札通知などの WebSocket 機能を使うには、別ターミナルで Reverb サーバを起動します。
+
+```bash
+make reverb
+```
 
 ## テスト
 
