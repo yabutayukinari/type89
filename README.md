@@ -19,40 +19,49 @@
 | データベース | MySQL（開発）/ MySQL 8 on tmpfs（テスト） |
 | 実行環境 | Laravel Sail（Docker） |
 
-## クイックスタート
+## セットアップ（はじめての方へ）
 
-### 1. バックエンド（Laravel / Sail）
+用意するのは次の3つです。
 
-必要なのは Docker（Docker Desktop / OrbStack 等）と `make` だけです。
+- **Docker**（Docker Desktop / OrbStack 等） — バックエンド一式を動かします
+- **make** — セットアップ／起動コマンド
+- **Node.js**（20 以降を推奨） — フロントエンド（`frontend/`）はホストの Node で動かします
+
+PHP・Composer・MySQL をローカルに入れる必要はありません（バックエンドはすべて Docker の中で完結します）。コマンドはリポジトリのルートで実行します。
+
+### 1. 初期セットアップ（初回だけ）
 
 ```bash
 make setup
 ```
 
-`.env` 生成・Sail 起動・マイグレーション・シードまで冪等に実行します（`make help` で全ターゲット）。完了後:
+コンテナ起動・`.env` 生成・DB マイグレーション & シード・フロントエンド依存のインストールまで、まとめて実行します（冪等なので何度実行しても安全）。
 
-- アプリ: <http://localhost>
-- 管理画面: <http://localhost/admin>
-- ログイン: `test_user@example.com` / `test1111`
-
-### 2. フロントエンド（Next.js）
-
-`frontend/` は Sail とは別に、ホストの Node で起動します。
+### 2. フロントエンド（Next.js）を起動 — 別ターミナル
 
 ```bash
-cd frontend
-cp .env.example .env.local   # NEXT_PUBLIC_* の雛形（API / Reverb の接続先）
-npm install
-npm run dev                  # http://localhost:3000
+make front
 ```
 
-### 3. リアルタイム（Reverb）
+Next.js の開発サーバが立ち上がります（起動したままにします）。
 
-入札・落札通知などの WebSocket 機能を使うには、別ターミナルで Reverb サーバを起動します。
+### 3. リアルタイム機能を使う場合 — さらに別ターミナル
+
+入札・落札通知などの WebSocket（Reverb）を動かすときだけ起動します。
 
 ```bash
 make reverb
 ```
+
+### 動作確認
+
+| 項目 | URL / ログイン情報 |
+| --- | --- |
+| アプリ（ユーザー画面） | <http://localhost:3000> |
+| 管理画面 | <http://localhost:3000/admin/login> |
+| ログイン（一般ユーザー） | `test_user@example.com` / `test1111` |
+
+`make front` / `make reverb` はそれぞれ起動しっぱなしになるため、別々のターミナルで実行してください。停止は各ターミナルで `Ctrl-C`。その他のコマンドは `make help` で確認できます。
 
 ## テスト
 
