@@ -6,7 +6,7 @@ COMPOSER_BOOTSTRAP := docker run --rm \
 	composer install --ignore-platform-reqs
 
 .DEFAULT_GOAL := help
-.PHONY: help setup up down restart shell ps logs test build fix migrate
+.PHONY: help setup up down restart front reverb shell ps logs test build fix migrate
 
 help: ## Show available targets
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "  \033[36m%-10s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -63,16 +63,19 @@ setup: ## One-shot bootstrap (idempotent)
 	fi
 	@echo "==> running migrations & seeders"
 	@$(SAIL) artisan migrate --seed
-	@if [ ! -d node_modules ]; then \
-		echo "==> npm install"; \
-		$(SAIL) npm install; \
+	@if [ ! -f frontend/.env.local ]; then \
+		echo "==> creating frontend/.env.local from example"; \
+		cp frontend/.env.example frontend/.env.local; \
 	else \
-		echo "==> node_modules/ exists, skipping npm install"; \
+		echo "==> frontend/.env.local exists, skipping"; \
 	fi
 	@echo "==> setup complete"
 	@echo ""
-	@echo "  App:        http://localhost"
-	@echo "  Admin:      http://localhost/admin"
+	@echo "  next:  make front    # start the Next.js dev server (separate terminal)"
+	@echo "         make reverb   # start Reverb for realtime (separate terminal)"
+	@echo ""
+	@echo "  App:        http://localhost:3000"
+	@echo "  Admin:      http://localhost:3000/admin/login"
 	@echo "  Login user: test_user@example.com / test1111"
 	@echo ""
 
@@ -83,6 +86,12 @@ down: ## Stop Sail containers
 	@$(SAIL) down
 
 restart: down up ## Restart Sail containers
+
+front: ## Start the Next.js dev server (host; installs deps on first run; http://localhost:3000)
+	@cd frontend && ([ -d node_modules ] || npm install) && npm run dev
+
+reverb: ## Start the Reverb WebSocket server (foreground; needed for realtime)
+	@$(SAIL) artisan reverb:start
 
 shell: ## Shell into the app container
 	@$(SAIL) shell
