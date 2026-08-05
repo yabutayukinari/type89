@@ -102,12 +102,7 @@ resource "aws_security_group" "rds" {
     security_groups = [aws_security_group.reverb.id]
   }
 
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
+  # RDS から外向き通信は不要なので egress は開けない（多層防御）。
 
   tags = { Name = "${local.name}-rds" }
 }

@@ -15,7 +15,7 @@ Laravel API(+Reverb) を **ECS Fargate**、フロント(Next.js) を **Amplify H
 
 構成の詳細:
 - 常時起動が要る **Reverb(WebSocket)** があるためサーバレスは不採用。ECS Fargate 常駐 + ALB(WSS)。
-- staging はコスト最適化: **パブリックサブネット(NATなし)** / **ElastiCache 無し**(session=cookie, cache=file) / RDS 単一AZ。
+- staging はコスト最適化: **パブリックサブネット(NATなし)** / **ElastiCache 無し**(session/cache は RDS の database ドライバ＝本番ともバックエンドを揃えられる) / RDS 単一AZ。
 - 機密は **SSM Parameter Store(SecureString)**、ECS が secrets として注入。
 - CD は **OIDC**(長期キー無し)。
 
@@ -85,8 +85,9 @@ GitHub リポジトリ **Settings → Secrets and variables → Actions → Vari
 
 > マイグレーション用のネットワーク設定(サブネット/SG)は CD が web サービスから自動取得するため、変数設定は不要です（環境を作り直しても壊れません）。
 
-設定後、`.github/workflows/deploy-staging.yml` を **workflow_dispatch** で手動実行（or main へ push）。
-→ ECR へイメージ push → ECS 更新 → `migrate --force` まで自動。
+設定後、`make deploy`（= `.github/workflows/deploy-staging.yml` を **workflow_dispatch** で実行）。
+→ ECR へ push → **migrate --force**（sessions/cache テーブル等を先に作成）→ ECS サービス更新、の順で自動。
+自動 push トリガは付けていない（オンデマンドで環境が down の間に失敗しないため）。
 
 ---
 
@@ -133,5 +134,13 @@ make down      # 完全破棄。待機中の課金をほぼゼロにする
 ## 補足・既知の注意点
 
 - 本番向けには private サブネット+NAT、session/cache を database/redis(ElastiCache)、RDS Multi-AZ を推奨（`prod.tfvars.example` 参照）。
-- Reverb のヘルスチェックは matcher を広め(`200-499`)にしている。実挙動に合わせて調整余地あり。
+- Reverb のヘルスチェックは実測した専用エンドポイント `/up`(200) を使用。
+
+### 初回 apply 時のライブ検証チェックリスト
+実インフラでしか確認できない項目。`make up` → `make deploy` 後に確認する:
+- [ ] `https://api.<env_domain>/api/health` が 200（ALB→web、ACM/TrustProxies が効いているか）
+- [ ] ALB の reverb ターゲットが healthy（`/up` 200 で判定）
+- [ ] フロントの入札画面で WSS がつながりリアルタイム更新が届く
+- [ ] **Amplify が Next.js 16 の SSR をビルドできるか**（Amplify の Next 対応はバージョン追随が遅れることがある。失敗する場合は Amplify をやめ ECS で `next start` する構成に切替）
+- [ ] Amplify の独自ドメイン(`app.<env_domain>`)が verified になるか（Route53 レコードが自動生成されない場合は手動追加）
 - Terraform は `validate` 済み。実 `plan/apply` は各自の AWS 認証情報で実行（このリポジトリでは AWS 資源は作成していません）。

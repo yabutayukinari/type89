@@ -1,16 +1,16 @@
 name: Deploy staging
 
-# main へのマージでバックエンド(ECS)を自動デプロイする。
+# バックエンド(ECS)を手動トリガでデプロイ（build→migrate→サービス更新）。
 # フロント(Amplify)は Amplify 側が push を検知して自動ビルドするため、ここでは扱わない。
 #
 # 必要な GitHub Actions Variables (Settings > Variables)。値は `terraform output` から取得:
 #   AWS_REGION, AWS_DEPLOY_ROLE_ARN, ECR_REPOSITORY, ECS_CLUSTER,
-#   ECS_WEB_SERVICE, ECS_REVERB_SERVICE, ECS_WEB_TASK_FAMILY, ECS_REVERB_TASK_FAMILY,
-#   ECS_SUBNETS (カンマ区切り), ECS_SECURITY_GROUP
+#   ECS_WEB_SERVICE, ECS_REVERB_SERVICE, ECS_WEB_TASK_FAMILY, ECS_REVERB_TASK_FAMILY
+# (サブネット/SG は web サービスから自動取得するため変数不要)
 
+# オンデマンド運用(A)前提。main push では自動起動せず、手動 (make deploy /
+# workflow_dispatch) でのみデプロイする。環境が down の間に自動実行して失敗するのを防ぐ。
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
 
 concurrency:
@@ -50,34 +50,12 @@ jobs:
           REGISTRY: ${{ steps.ecr.outputs.registry }}
         run: |
           IMAGE="$REGISTRY/$ECR_REPOSITORY:${{ github.sha }}"
-          docker build -f docker/prod/Dockerfile -t "$IMAGE" .
+          # Fargate は X86_64。ランナー(amd64)と一致させるため platform を明示。
+          docker build --platform linux/amd64 -f docker/prod/Dockerfile -t "$IMAGE" .
           docker push "$IMAGE"
           echo "image=$IMAGE" >> "$GITHUB_OUTPUT"
 
-      - name: Deploy ECS services (web / reverb)
-        env:
-          IMAGE: ${{ steps.build.outputs.image }}
-        run: |
-          set -euo pipefail
-          deploy() {
-            local family="$1" service="$2"
-            echo "==> $service : register new task definition"
-            local td new rev
-            td=$(aws ecs describe-task-definition --task-definition "$family")
-            new=$(echo "$td" | jq --arg img "$IMAGE" '
-              .taskDefinition
-              | .containerDefinitions[0].image = $img
-              | {family, taskRoleArn, executionRoleArn, networkMode, containerDefinitions,
-                 requiresCompatibilities, cpu, memory, runtimePlatform}')
-            rev=$(aws ecs register-task-definition --cli-input-json "$new" \
-                  --query 'taskDefinition.taskDefinitionArn' --output text)
-            echo "    -> $rev"
-            aws ecs update-service --cluster "$ECS_CLUSTER" --service "$service" \
-              --task-definition "$rev" >/dev/null
-          }
-          deploy "${{ vars.ECS_WEB_TASK_FAMILY }}"    "${{ vars.ECS_WEB_SERVICE }}"
-          deploy "${{ vars.ECS_REVERB_TASK_FAMILY }}" "${{ vars.ECS_REVERB_SERVICE }}"
-
+      # 新しい相手が配信される前にスキーマを更新する（sessions/cache テーブル等を先に用意）
       - name: Run database migrations (one-off task)
         env:
           IMAGE: ${{ steps.build.outputs.image }}
@@ -112,3 +90,27 @@ jobs:
                  --query 'tasks[0].containers[0].exitCode' --output text)
           echo "migration exit code: $code"
           test "$code" = "0"
+
+      - name: Deploy ECS services (web / reverb)
+        env:
+          IMAGE: ${{ steps.build.outputs.image }}
+        run: |
+          set -euo pipefail
+          deploy() {
+            local family="$1" service="$2"
+            echo "==> $service : register new task definition"
+            local td new rev
+            td=$(aws ecs describe-task-definition --task-definition "$family")
+            new=$(echo "$td" | jq --arg img "$IMAGE" '
+              .taskDefinition
+              | .containerDefinitions[0].image = $img
+              | {family, taskRoleArn, executionRoleArn, networkMode, containerDefinitions,
+                 requiresCompatibilities, cpu, memory, runtimePlatform}')
+            rev=$(aws ecs register-task-definition --cli-input-json "$new" \
+                  --query 'taskDefinition.taskDefinitionArn' --output text)
+            echo "    -> $rev"
+            aws ecs update-service --cluster "$ECS_CLUSTER" --service "$service" \
+              --task-definition "$rev" >/dev/null
+          }
+          deploy "${{ vars.ECS_WEB_TASK_FAMILY }}"    "${{ vars.ECS_WEB_SERVICE }}"
+          deploy "${{ vars.ECS_REVERB_TASK_FAMILY }}" "${{ vars.ECS_REVERB_SERVICE }}"

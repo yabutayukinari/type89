@@ -2,8 +2,9 @@ locals {
   ecr_image = "${aws_ecr_repository.app.repository_url}:${var.app_image_tag}"
 
   # 平文で渡してよいアプリ環境変数。
-  # セッションは cookie、キャッシュは file にして Redis や追加テーブルへの依存を無くす
-  # (staging 向け。prod では database/redis を推奨)。
+  # セッション/キャッシュは RDS(database) を使う。ElastiCache を足さずに複数タスク間で
+  # 状態を共有でき、本番とも同じバックエンドに揃えられる（パリティ確保）。
+  # 必要なテーブルは migration (sessions / cache) で作成される。
   app_environment = {
     APP_NAME                 = "type89"
     APP_ENV                  = var.app_env
@@ -17,8 +18,8 @@ locals {
     DB_USERNAME              = var.db_username
     BROADCAST_DRIVER         = "reverb"
     QUEUE_CONNECTION         = "sync"
-    CACHE_STORE              = "file"
-    SESSION_DRIVER           = "cookie"
+    CACHE_DRIVER             = "database"
+    SESSION_DRIVER           = "database"
     SESSION_SECURE_COOKIE    = "true"
     SESSION_DOMAIN           = ".${var.env_domain}"
     SANCTUM_STATEFUL_DOMAINS = local.app_fqdn
@@ -69,6 +70,17 @@ data "aws_iam_policy_document" "exec_ssm" {
   statement {
     actions   = ["ssm:GetParameters", "ssm:GetParameter"]
     resources = [for p in aws_ssm_parameter.secure : p.arn]
+  }
+
+  # SecureString の復号。SSM 経由に限定（既定 aws/ssm キーでも CMK でも動くように）。
+  statement {
+    actions   = ["kms:Decrypt"]
+    resources = ["*"]
+    condition {
+      test     = "StringEquals"
+      variable = "kms:ViaService"
+      values   = ["ssm.${var.region}.amazonaws.com"]
+    }
   }
 }
 
@@ -162,6 +174,10 @@ resource "aws_ecs_service" "web" {
   desired_count   = var.web_desired_count
   launch_type     = "FARGATE"
 
+  # 起動時のキャッシュ生成/パッケージ探索で数十秒かかるため、その間は
+  # ヘルスチェック不合格でタスクを kill しない（クラッシュループ防止）。
+  health_check_grace_period_seconds = 120
+
   network_configuration {
     subnets          = aws_subnet.public[*].id
     security_groups  = [aws_security_group.web.id]
@@ -188,6 +204,8 @@ resource "aws_ecs_service" "reverb" {
   task_definition = aws_ecs_task_definition.reverb.arn
   desired_count   = 1
   launch_type     = "FARGATE"
+
+  health_check_grace_period_seconds = 120
 
   network_configuration {
     subnets          = aws_subnet.public[*].id

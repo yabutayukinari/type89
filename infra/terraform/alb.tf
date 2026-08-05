@@ -23,7 +23,7 @@ resource "aws_lb_target_group" "web" {
 }
 
 # reverb (WebSocket) 用ターゲットグループ
-# Reverb は素の HTTP GET に対して 404 系を返すため、matcher を広めに取る。
+# Reverb は専用ヘルスエンドポイント /up に 200 を返す（実測確認済み）。
 resource "aws_lb_target_group" "reverb" {
   name        = "${local.name}-reverb"
   port        = 8080
@@ -32,8 +32,8 @@ resource "aws_lb_target_group" "reverb" {
   target_type = "ip"
 
   health_check {
-    path                = "/"
-    matcher             = "200-499"
+    path                = "/up"
+    matcher             = "200"
     interval            = 30
     healthy_threshold   = 2
     unhealthy_threshold = 3
