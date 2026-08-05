@@ -10,9 +10,12 @@ class TrustProxies extends Middleware
     /**
      * The trusted proxies for this application.
      *
+     * ALB / ロードバランサ配下で X-Forwarded-Proto 等を信頼し HTTPS を正しく検出するため
+     * すべてのプロキシを信頼する。ingress は LB のセキュリティグループに限定されるため安全。
+     *
      * @var array<int, string>|string|null
      */
-    protected $proxies;
+    protected $proxies = '*';
 
     /**
      * The headers that should be used to detect proxies.

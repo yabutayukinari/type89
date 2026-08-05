@@ -1,0 +1,18 @@
+# 本番 Docker イメージ (docker/prod/Dockerfile) 用の除外設定。
+# バックエンドのみを含め、フロントや開発物は除外する。
+.git
+.github
+frontend
+node_modules
+infra
+docs
+tests
+storage/logs/*
+storage/framework/cache/*
+storage/framework/sessions/*
+storage/framework/views/*
+.env
+.env.*
+!.env.example
+*.md
+docker-compose.yml

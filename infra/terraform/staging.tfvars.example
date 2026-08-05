@@ -1,0 +1,26 @@
+# staging 用の値。コピーして staging.tfvars を作り、実値を入れる。
+#   cp staging.tfvars.example staging.tfvars
+environment = "staging"
+region      = "ap-northeast-1"
+
+# ドメイン（Route53 の Hosted Zone が root_domain で存在している前提）
+root_domain = "example.com"
+env_domain  = "stg.example.com"
+
+app_env = "staging"
+
+# コスト最小構成（staging）
+db_instance_class = "db.t4g.micro"
+db_multi_az       = false
+web_desired_count = 1
+
+# CD（GitHub OIDC）
+github_owner         = "yabutayukinari"
+github_repo          = "type89"
+github_deploy_ref    = "refs/heads/main"
+create_oidc_provider = true
+
+# フロント（Amplify）: GitHub PAT を渡すと作成される。
+# 機密なので TF_VAR_amplify_access_token 環境変数での注入を推奨。
+amplify_repository_url = "https://github.com/yabutayukinari/type89"
+# amplify_access_token = "ghp_xxx"

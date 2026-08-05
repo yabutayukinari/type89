@@ -1,0 +1,116 @@
+name: Deploy staging
+
+# バックエンド(ECS)を手動トリガでデプロイ（build→migrate→サービス更新）。
+# フロント(Amplify)は Amplify 側が push を検知して自動ビルドするため、ここでは扱わない。
+#
+# 必要な GitHub Actions Variables (Settings > Variables)。値は `terraform output` から取得:
+#   AWS_REGION, AWS_DEPLOY_ROLE_ARN, ECR_REPOSITORY, ECS_CLUSTER,
+#   ECS_WEB_SERVICE, ECS_REVERB_SERVICE, ECS_WEB_TASK_FAMILY, ECS_REVERB_TASK_FAMILY
+# (サブネット/SG は web サービスから自動取得するため変数不要)
+
+# オンデマンド運用(A)前提。main push では自動起動せず、手動 (make deploy /
+# workflow_dispatch) でのみデプロイする。環境が down の間に自動実行して失敗するのを防ぐ。
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-staging
+  cancel-in-progress: false
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    # AWS 側のセットアップ(変数設定)が済むまでは自動でスキップし、CI を汚さない
+    if: ${{ vars.AWS_DEPLOY_ROLE_ARN != '' }}
+    environment: staging
+    env:
+      AWS_REGION: ${{ vars.AWS_REGION }}
+      ECR_REPOSITORY: ${{ vars.ECR_REPOSITORY }}
+      ECS_CLUSTER: ${{ vars.ECS_CLUSTER }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: ecr
+        uses: aws-actions/amazon-ecr-login@d539f0932e70871a027e9d5a9d8fc38589180a64 # v2
+
+      - name: Build & push image
+        id: build
+        env:
+          REGISTRY: ${{ steps.ecr.outputs.registry }}
+        run: |
+          IMAGE="$REGISTRY/$ECR_REPOSITORY:${{ github.sha }}"
+          # Fargate は X86_64。ランナー(amd64)と一致させるため platform を明示。
+          docker build --platform linux/amd64 -f docker/prod/Dockerfile -t "$IMAGE" .
+          docker push "$IMAGE"
+          echo "image=$IMAGE" >> "$GITHUB_OUTPUT"
+
+      # 新しい相手が配信される前にスキーマを更新する（sessions/cache テーブル等を先に用意）
+      - name: Run database migrations (one-off task)
+        env:
+          IMAGE: ${{ steps.build.outputs.image }}
+        run: |
+          set -euo pipefail
+          # web タスク定義をベースに、コマンドを migrate に上書きした単発タスクを実行
+          td=$(aws ecs describe-task-definition --task-definition "${{ vars.ECS_WEB_TASK_FAMILY }}")
+          new=$(echo "$td" | jq --arg img "$IMAGE" '
+            .taskDefinition
+            | .containerDefinitions[0].image = $img
+            | .containerDefinitions[0].command = ["php","artisan","migrate","--force"]
+            | {family, taskRoleArn, executionRoleArn, networkMode, containerDefinitions,
+               requiresCompatibilities, cpu, memory, runtimePlatform}')
+          rev=$(aws ecs register-task-definition --cli-input-json "$new" \
+                --query 'taskDefinition.taskDefinitionArn' --output text)
+
+          # ネットワーク設定は web サービスから取得（環境を作り直しても壊れない）
+          net=$(aws ecs describe-services --cluster "$ECS_CLUSTER" \
+                --services "${{ vars.ECS_WEB_SERVICE }}" \
+                --query 'services[0].networkConfiguration.awsvpcConfiguration' --output json)
+          subnets=$(echo "$net" | jq -r '.subnets | join(",")')
+          sgs=$(echo "$net" | jq -r '.securityGroups | join(",")')
+          netcfg="awsvpcConfiguration={subnets=[$subnets],securityGroups=[$sgs],assignPublicIp=ENABLED}"
+
+          arn=$(aws ecs run-task --cluster "$ECS_CLUSTER" --launch-type FARGATE \
+                --task-definition "$rev" --network-configuration "$netcfg" \
+                --query 'tasks[0].taskArn' --output text)
+          echo "migration task: $arn"
+          aws ecs wait tasks-stopped --cluster "$ECS_CLUSTER" --tasks "$arn"
+
+          code=$(aws ecs describe-tasks --cluster "$ECS_CLUSTER" --tasks "$arn" \
+                 --query 'tasks[0].containers[0].exitCode' --output text)
+          echo "migration exit code: $code"
+          test "$code" = "0"
+
+      - name: Deploy ECS services (web / reverb)
+        env:
+          IMAGE: ${{ steps.build.outputs.image }}
+        run: |
+          set -euo pipefail
+          deploy() {
+            local family="$1" service="$2"
+            echo "==> $service : register new task definition"
+            local td new rev
+            td=$(aws ecs describe-task-definition --task-definition "$family")
+            new=$(echo "$td" | jq --arg img "$IMAGE" '
+              .taskDefinition
+              | .containerDefinitions[0].image = $img
+              | {family, taskRoleArn, executionRoleArn, networkMode, containerDefinitions,
+                 requiresCompatibilities, cpu, memory, runtimePlatform}')
+            rev=$(aws ecs register-task-definition --cli-input-json "$new" \
+                  --query 'taskDefinition.taskDefinitionArn' --output text)
+            echo "    -> $rev"
+            aws ecs update-service --cluster "$ECS_CLUSTER" --service "$service" \
+              --task-definition "$rev" >/dev/null
+          }
+          deploy "${{ vars.ECS_WEB_TASK_FAMILY }}"    "${{ vars.ECS_WEB_SERVICE }}"
+          deploy "${{ vars.ECS_REVERB_TASK_FAMILY }}" "${{ vars.ECS_REVERB_SERVICE }}"

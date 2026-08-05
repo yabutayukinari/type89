@@ -1,0 +1,25 @@
+# prod 用の雛形（将来）。staging を安定させてから使う。
+# OIDC プロバイダはアカウントに1つなので、staging で作成済みなら prod では作らず参照する。
+environment = "prod"
+region      = "ap-northeast-1"
+
+root_domain = "example.com"
+env_domain  = "example.com" # 本番は app.example.com / api.example.com など
+
+app_env = "production"
+
+# 本番はやや強め・冗長化
+db_instance_class = "db.t4g.small"
+db_multi_az       = true
+web_desired_count = 2
+
+github_owner      = "yabutayukinari"
+github_repo       = "type89"
+github_deploy_ref = "refs/heads/main"
+
+# OIDC は staging で作成済みの想定。prod では参照のみ。
+create_oidc_provider       = false
+existing_oidc_provider_arn = "arn:aws:iam::<ACCOUNT_ID>:oidc-provider/token.actions.githubusercontent.com"
+
+amplify_repository_url = "https://github.com/yabutayukinari/type89"
+# amplify_access_token = "ghp_xxx"
