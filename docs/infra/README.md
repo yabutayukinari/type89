@@ -82,8 +82,8 @@ GitHub リポジトリ **Settings → Secrets and variables → Actions → Vari
 | `ECS_REVERB_SERVICE` | `ecs_reverb_service` |
 | `ECS_WEB_TASK_FAMILY` | `web_task_family` |
 | `ECS_REVERB_TASK_FAMILY` | `type89-staging-reverb` |
-| `ECS_SUBNETS` | `private_subnet_ids` をカンマ区切りで |
-| `ECS_SECURITY_GROUP` | `web_security_group_id` |
+
+> マイグレーション用のネットワーク設定(サブネット/SG)は CD が web サービスから自動取得するため、変数設定は不要です（環境を作り直しても壊れません）。
 
 設定後、`.github/workflows/deploy-staging.yml` を **workflow_dispatch** で手動実行（or main へ push）。
 → ECR へイメージ push → ECS 更新 → `migrate --force` まで自動。
@@ -96,6 +96,28 @@ GitHub リポジトリ **Settings → Secrets and variables → Actions → Vari
 
 ---
 
+## オンデマンド運用（A: 本番同一構成を「使う時だけ」立てる）
+
+STG の価値は**本番との同一性**にあるため、構成は本番と同じ（ALB/ECS/RDS/IAM/CD）まま、
+**常時起動をやめて待機コストをほぼゼロ**にする。`infra/terraform/` の Makefile を使う。
+
+```bash
+cd infra/terraform
+
+make up        # 本番同一構成を作成（初回は 10〜15 分。ACM/DNS 検証を含む）
+make deploy    # CD(GitHub Actions) でビルド&デプロイ&migrate
+make seed      # 初期データ投入（DB は毎回破棄されるため都度 seed する）
+
+# ... テスト ...
+
+make down      # 完全破棄。待機中の課金をほぼゼロにする
+```
+
+- **コスト**: `up` 中だけ課金（Fargate/ALB/RDS）。月に数時間なら**数百円**規模。使わない間は `down` で ~¥0。
+- **同一性**: サイズ(1タスク / t4g.micro)は本番より小さくても、**構成・挙動(ALBのWSS・RDS接続・IAM/Secrets・CD経路)は本番と一致**。ここが検証で効く部分。
+- **DB は毎回破棄**: staging はシード前提のため `make seed` で復元（永続データは持たない）。
+- **注意（将来 prod と併用時）**: この構成は staging の破棄で GitHub OIDC プロバイダも一緒に消える。prod を常設で運用し始めたら、OIDC プロバイダ/ECR など長寿命リソースは別 state に分離するのが望ましい（当面 staging のみなら問題なし。deploy ロールの ARN は名前が同じなので作り直しても不変）。
+
 ## 動作確認
 
 - API: `https://api.<env_domain>/api/health` が `{"status":"ok"}`
@@ -104,8 +126,9 @@ GitHub リポジトリ **Settings → Secrets and variables → Actions → Vari
 
 ## コスト目安 / 片付け
 
-- 目安 月$40〜70（ALB / Fargate2 / RDS t4g.micro / Amplify）。使わないときは `terraform destroy -var-file=staging.tfvars` で破棄。
-- prod を作るときは `prod.tfvars`（OIDC は `create_oidc_provider=false` で既存参照）+ `backends/prod.hcl` で同じ手順。
+- 常時起動なら月$40〜70（ALB / Fargate2 / RDS t4g.micro / Amplify）。
+- **推奨は上記「オンデマンド運用(A)」**: `make up`〜`make down` で使う時だけ起動 → 待機中はほぼ¥0。月数時間の利用なら数百円規模。
+- prod を作るときは `prod.tfvars`（OIDC は `create_oidc_provider=false` で既存参照）+ `backends/prod.hcl` で同じ手順。prod は常設想定。
 
 ## 補足・既知の注意点
 
