@@ -8,6 +8,7 @@ updates:
       time: "09:00"
       timezone: Asia/Tokyo
     open-pull-requests-limit: 10
+    # override-freshness ラベルは Dependency freshness チェックの緊急バイパス用。ここには入れない
     labels:
       - dependencies
       - php
@@ -21,7 +22,7 @@ updates:
       default-days: 7
       semver-major-days: 30
       semver-minor-days: 7
-      semver-patch-days: 3
+      semver-patch-days: 7
 
   - package-ecosystem: npm
     directory: "/frontend"
@@ -31,6 +32,7 @@ updates:
       time: "09:00"
       timezone: Asia/Tokyo
     open-pull-requests-limit: 10
+    # override-freshness ラベルは Dependency freshness チェックの緊急バイパス用。ここには入れない
     labels:
       - dependencies
       - javascript
@@ -43,7 +45,7 @@ updates:
       default-days: 7
       semver-major-days: 30
       semver-minor-days: 7
-      semver-patch-days: 3
+      semver-patch-days: 7
 
   - package-ecosystem: github-actions
     directory: "/"
@@ -52,6 +54,7 @@ updates:
       day: monday
       time: "09:00"
       timezone: Asia/Tokyo
+    # override-freshness ラベルは Dependency freshness チェックの緊急バイパス用。ここには入れない
     labels:
       - dependencies
       - github-actions
@@ -64,4 +67,4 @@ updates:
       default-days: 7
       semver-major-days: 30
       semver-minor-days: 7
-      semver-patch-days: 3
+      semver-patch-days: 7

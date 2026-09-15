@@ -82,6 +82,24 @@ brew install lefthook
 lefthook install
 ```
 
+## 依存の更新（Dependabot）の運用
+
+Dependabot の PR は自動ではマージしません。人が内容を確かめてマージします。
+
+必須チェック `Dependency freshness` は、`composer.lock` で動いたパッケージのうち次のいずれかがあれば落ちます。
+
+- dev・alpha・beta・RC などの版
+- メジャーの上げ（`0.x` 系は minor の上げをメジャー相当として扱う）
+- Packagist の `published-time` で公開から 7 日未満の版
+
+メジャーの判定は、下げなら通ります。安定度・公開7日未満・Packagist から取れないときの判定は、下げでもかかります。`composer.lock` の `time` フィールドは作者が偽装できるため判定に使わず、Packagist の `published-time` だけを見ます。Packagist から情報が取れなかった場合は不合格として扱います。
+
+脆弱性修正など急いでマージしたい場合は、PR に `override-freshness` ラベルを付けると警告のみでチェックが通ります。
+
+npm（`frontend/package-lock.json`）と GitHub Actions の依存はこのチェックの対象外です（npm 対応は第2段で追加予定）。当面は Dependabot の待機日数（cooldown）・`npm audit`・OSV-Scanner・人によるレビューでリスクを抑えます。
+
+Dependabot の待機日数（`.github/dependabot.yml` の `cooldown`）は、patch・minor がともに 7 日、major は 30 日です。
+
 ## Security
 
 脆弱性を発見した場合は [GitHub Issues](https://github.com/yabutayukinari/type89/issues) でご報告ください。

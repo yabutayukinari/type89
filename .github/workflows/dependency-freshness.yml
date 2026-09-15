@@ -1,0 +1,166 @@
+name: Dependency freshness
+
+# Dependabot が composer.lock を更新した PR で、公開直後のバージョンや
+# dev/alpha/beta/RC、メジャーの巻き上げを人の目より先に弾く。
+# `override-freshness` ラベルを付けると警告のみで通す（脆弱性修正など急ぐ場合）。
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+  schedule:
+    # 月曜 4:23 UTC (codeql) / 5:17 UTC (osv-scanner) とずらす
+    - cron: "42 6 * * 1"
+  workflow_dispatch:
+    inputs:
+      base:
+        description: "比較元の commit SHA(任意。省略時は canary ジョブのみ動く想定)"
+        required: false
+        type: string
+      head:
+        description: "比較先の commit SHA(任意。省略時は canary ジョブのみ動く想定)"
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  dependency-freshness:
+    name: ${{ github.event_name == 'pull_request' && 'Dependency freshness' || 'Dependency freshness (manual)' }}
+    if: github.event_name != 'schedule'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        if: github.event_name != 'schedule'
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        if: github.event_name != 'schedule'
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+
+      - name: Extract freshness script from base commit
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          if [ -z "${BASE_SHA}" ] || ! git cat-file -e "${BASE_SHA}^{commit}"; then
+            echo "::error::base commit (${BASE_SHA}) を取得できません(clone に無い、または SHA が空/不正です)"
+            exit 1
+          fi
+          if git cat-file -e "${BASE_SHA}:.github/scripts/check_lock_freshness.py" 2>/dev/null; then
+            git show "${BASE_SHA}:.github/scripts/check_lock_freshness.py" \
+              > "$RUNNER_TEMP/check_lock_freshness.py"
+            echo "Using check_lock_freshness.py from base commit"
+          else
+            echo "::warning::check_lock_freshness.py not found at base; using head's version"
+            git show "${HEAD_SHA}:.github/scripts/check_lock_freshness.py" \
+              > "$RUNNER_TEMP/check_lock_freshness.py"
+          fi
+
+      - name: Run dependency freshness check (pull_request)
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          HAS_OVERRIDE_LABEL: ${{ contains(github.event.pull_request.labels.*.name, 'override-freshness') }}
+        run: |
+          set -euo pipefail
+          args=(--base "$BASE_SHA" --head "$HEAD_SHA")
+          if [ "$HAS_OVERRIDE_LABEL" = "true" ]; then
+            args+=(--override)
+          fi
+          python3 "$RUNNER_TEMP/check_lock_freshness.py" "${args[@]}"
+
+      - name: Extract freshness script from default branch (workflow_dispatch)
+        if: github.event_name == 'workflow_dispatch' && inputs.base != '' && inputs.head != ''
+        env:
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+        run: |
+          set -euo pipefail
+          git show "origin/${DEFAULT_BRANCH}:.github/scripts/check_lock_freshness.py" \
+            > "$RUNNER_TEMP/check_lock_freshness.py"
+
+      - name: Run dependency freshness check (workflow_dispatch)
+        if: github.event_name == 'workflow_dispatch' && inputs.base != '' && inputs.head != ''
+        env:
+          BASE_SHA: ${{ inputs.base }}
+          HEAD_SHA: ${{ inputs.head }}
+        run: |
+          set -euo pipefail
+          python3 "$RUNNER_TEMP/check_lock_freshness.py" --base "$BASE_SHA" --head "$HEAD_SHA"
+
+      - name: Validate workflow_dispatch base/head inputs
+        if: |
+          github.event_name == 'workflow_dispatch' &&
+          ((inputs.base == '' && inputs.head != '') || (inputs.base != '' && inputs.head == ''))
+        run: |
+          echo "::error::base と head は両方指定するか、両方省く"
+          exit 1
+
+      - name: No-op for workflow_dispatch without base/head
+        if: github.event_name == 'workflow_dispatch' && inputs.base == '' && inputs.head == ''
+        run: echo "base と head が両方省略されたので判定しない(canary ジョブだけ動く)"
+
+  dependency-freshness-tests:
+    name: Dependency freshness tests
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+
+      - name: Check whether freshness scripts changed
+        id: diff
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          changed=$(git diff --name-only "${BASE_SHA}...${HEAD_SHA}" -- \
+            .github/scripts .github/workflows/dependency-freshness.yml)
+          if [ -n "$changed" ]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Run script unit tests
+        if: steps.diff.outputs.changed == 'true'
+        run: python3 -m unittest discover -s .github/scripts/tests
+
+  packagist-canary:
+    name: Packagist published-time canary
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+
+      - name: Run Packagist published-time canary
+        run: python3 .github/scripts/check_lock_freshness.py --canary
