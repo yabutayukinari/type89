@@ -1318,6 +1318,137 @@ class ReferenceMismatchTests(unittest.TestCase):
         self.assertIn("reference を Packagist の登録と照らせない", reason.message)
         self.assertTrue(reason.versions_readable)
 
+    def test_lock_source_only_p2_dist_only_is_undeterminable(self):
+        # 前回の査読「直すとよい」1件目: lock は source しか無く、p2 は dist しか
+        # 無い（種類がすれ違い、比べられる組み合わせが1つも無い）ときも判定不能に
+        # なることを確かめる（既存の test_missing_p2_reference_is_undeterminable は
+        # p2 側に一切無いケースなので、これとは別に確かめる）。
+        base_pkg = clf.PackageEntry(
+            name="acme/crossed",
+            version="1.0.0",
+            source_reference="base-src",
+            dist_reference=None,
+            notification_url=PACKAGIST_URL,
+        )
+        head_pkg = clf.PackageEntry(
+            name="acme/crossed",
+            version="1.1.0",
+            source_reference="lock-src",  # lock は source だけ
+            dist_reference=None,
+            notification_url=PACKAGIST_URL,
+        )
+        now = dt.datetime(2026, 9, 15, tzinfo=dt.timezone.utc)
+        old_published = (now - dt.timedelta(days=30)).isoformat()
+
+        def fetch(vendor, name):
+            payload = {
+                "minified": "composer/2.0",
+                "packages": {
+                    "acme/crossed": [
+                        {
+                            "version": "1.1.0",
+                            # p2 は dist だけ（source キーが無い）
+                            "dist": {"reference": "p2-dist"},
+                            "published-time": old_published,
+                        }
+                    ]
+                },
+            }
+            return json.dumps(payload)
+
+        reason, queried = clf.evaluate_package(
+            base_pkg, head_pkg, now=now, min_age_days=7, fetch_json_text=fetch
+        )
+        self.assertTrue(queried)
+        self.assertIsNotNone(reason)
+        self.assertIn("reference を Packagist の登録と照らせない", reason.message)
+        self.assertTrue(reason.versions_readable)
+
+    def test_lock_has_no_reference_at_all_is_undeterminable(self):
+        # 前回の査読「直すとよい」1件目: lock に source も dist も無い（composer.lock
+        # の形としては許される書き方。parse_lock_packages は LockParseError に
+        # しない）ときも、p2 側に source・dist が揃っていて version が一致していても
+        # 判定不能になることを、main の全体の流れ（lock のパースから）で確かめる。
+        base = {
+            "packages": [
+                {
+                    "name": "acme/noref",
+                    "version": "1.0.0",
+                    "notification-url": PACKAGIST_URL,
+                    # source も dist も無い
+                }
+            ],
+            "packages-dev": [],
+        }
+        head = {
+            "packages": [
+                {
+                    "name": "acme/noref",
+                    "version": "1.1.0",
+                    "notification-url": PACKAGIST_URL,
+                    # source も dist も無い（lock の形として許される）
+                }
+            ],
+            "packages-dev": [],
+        }
+        base_text = json.dumps(base)
+        head_text = json.dumps(head)
+
+        # parse_lock_packages が LockParseError を出さずに読めることを直接も確かめる。
+        head_packages, head_duplicates = clf.parse_lock_packages(head_text)
+        self.assertEqual(head_duplicates, set())
+        self.assertIsNone(head_packages["acme/noref"].source_reference)
+        self.assertIsNone(head_packages["acme/noref"].dist_reference)
+
+        git_show, git_merge_base = make_git_fakes(
+            "aaaa777", base_text, "bbbb777", head_text
+        )
+
+        def fetch(vendor, name):
+            payload = {
+                "minified": "composer/2.0",
+                "packages": {
+                    "acme/noref": [
+                        {
+                            "version": "1.1.0",
+                            "source": {"reference": "p2-src"},
+                            "dist": {"reference": "p2-dist"},
+                            "published-time": "2020-01-01T00:00:00+00:00",
+                        }
+                    ]
+                },
+            }
+            return json.dumps(payload)
+
+        stream = io.StringIO()
+        exit_code = clf.main(
+            ["--base", "aaaa777", "--head", "bbbb777"],
+            git_show=git_show,
+            git_merge_base=git_merge_base,
+            fetch_json_text=fetch,
+            now_func=lambda: dt.datetime(2026, 9, 15, tzinfo=dt.timezone.utc),
+            stream=stream,
+        )
+        output = stream.getvalue()
+        self.assertEqual(exit_code, 1, output)
+        self.assertIn(
+            "reference を Packagist の登録と照らせない", output
+        )
+
+        stream = io.StringIO()
+        exit_code = clf.main(
+            ["--base", "aaaa777", "--head", "bbbb777", "--override"],
+            git_show=git_show,
+            git_merge_base=git_merge_base,
+            fetch_json_text=fetch,
+            now_func=lambda: dt.datetime(2026, 9, 15, tzinfo=dt.timezone.utc),
+            stream=stream,
+        )
+        output = stream.getvalue()
+        self.assertEqual(exit_code, 0, output)
+        self.assertIn("::warning::", output)
+        self.assertIn("reference を Packagist の登録と照らせない", output)
+
     def test_source_only_mismatch_is_detected(self):
         # 直すとよい7-3: dist は一致するが source だけ食い違う場合も検出する。
         base_pkg = clf.PackageEntry(
@@ -2549,6 +2680,99 @@ class DeadlineAndCircuitBreakerTests(unittest.TestCase):
         self.assertEqual(exit_code, 1, output)
         self.assertEqual(len(calls), 5)
         self.assertNotIn("続けて失敗したため打ち切り", output)
+
+
+    def test_recent_publish_rejection_between_exhausted_failures_resets_counter(self):
+        # 前回の査読「直すとよい」2件目: 「使い切り、使い切り、7日未満の不合格
+        # （版一覧は読めている）、使い切り、使い切り」の順。0 に戻すのは
+        # p2 の応答を取得でき、JSON として読めて、版一覧が読めたときだけで、
+        # そのうえでの不合格（公開から7日未満）でも versions_readable=True
+        # なので 0 に戻る。5件すべて問い合わせて打ち切られない。
+        names = ["acme/a", "acme/b", "acme/c", "acme/d", "acme/e"]
+        base_text = self._make_lock_text([(n, "1.0.0") for n in names])
+        head_text = self._make_lock_text([(n, "1.1.0") for n in names])
+        git_show, git_merge_base = make_git_fakes("caaa666", base_text, "cbbb666", head_text)
+
+        now = dt.datetime(2026, 9, 15, tzinfo=dt.timezone.utc)
+        recent_published = (now - dt.timedelta(days=2)).isoformat()
+
+        calls: list[tuple[str, str]] = []
+
+        def fetch(vendor, name):
+            calls.append((vendor, name))
+            if name == "c":
+                full_name = f"{vendor}/{name}"
+                payload = {
+                    "minified": "composer/2.0",
+                    "packages": {
+                        full_name: [
+                            {
+                                "version": "1.1.0",
+                                "source": {"reference": f"ref-{full_name}-1.1.0"},
+                                "dist": {"reference": f"ref-{full_name}-1.1.0"},
+                                # 版一覧・reference までは読めるが、公開から7日未満で不合格
+                                "published-time": recent_published,
+                            }
+                        ]
+                    },
+                }
+                return json.dumps(payload)
+            raise clf.PackagistFetchError(
+                "タイムアウトなどで取得できなかった (...)", retryable=True
+            )
+
+        stream = io.StringIO()
+        exit_code = clf.main(
+            ["--base", "caaa666", "--head", "cbbb666"],
+            git_show=git_show,
+            git_merge_base=git_merge_base,
+            fetch_json_text=fetch,
+            now_func=lambda: now,
+            stream=stream,
+        )
+        output = stream.getvalue()
+        self.assertEqual(exit_code, 1, output)
+        # 5件すべて問い合わせる（c の不合格でカウンタがリセットされ打ち切られない）。
+        self.assertEqual(len(calls), 5)
+        self.assertNotIn("続けて失敗したため打ち切り", output)
+        self.assertIn("日未満のため不合格", output)
+
+    def test_response_shape_difference_between_exhausted_failures_does_not_reset_counter(self):
+        # 前回の査読「直すとよい」2件目: 「使い切り、使い切り、応答の形の違い
+        # （packages が無い＝版一覧にたどり着けていない）、使い切り」の順。
+        # 応答の形の違いは数えも戻しもしない（据え置き）ので、
+        # a(1)→b(2)→c(形の違い、据え置き=2)→d(3) で3件になり、d の後で打ち切られる
+        # （e は問い合わせない）。
+        names = ["acme/a", "acme/b", "acme/c", "acme/d", "acme/e"]
+        base_text = self._make_lock_text([(n, "1.0.0") for n in names])
+        head_text = self._make_lock_text([(n, "1.1.0") for n in names])
+        git_show, git_merge_base = make_git_fakes("caaa888", base_text, "cbbb888", head_text)
+
+        calls: list[tuple[str, str]] = []
+
+        def fetch(vendor, name):
+            calls.append((vendor, name))
+            if name == "c":
+                # packages キーが無い＝版一覧より手前の「応答の形の違い」
+                return json.dumps({})
+            raise clf.PackagistFetchError(
+                "タイムアウトなどで取得できなかった (...)", retryable=True
+            )
+
+        stream = io.StringIO()
+        exit_code = clf.main(
+            ["--base", "caaa888", "--head", "cbbb888"],
+            git_show=git_show,
+            git_merge_base=git_merge_base,
+            fetch_json_text=fetch,
+            now_func=lambda: dt.datetime(2026, 9, 15, tzinfo=dt.timezone.utc),
+            stream=stream,
+        )
+        output = stream.getvalue()
+        self.assertEqual(exit_code, 1, output)
+        # a・b・c・d の4件だけ問い合わせる（e は打ち切り）。
+        self.assertEqual(calls, [("acme", "a"), ("acme", "b"), ("acme", "c"), ("acme", "d")])
+        self.assertIn("Packagist への問い合わせが続けて失敗したため打ち切り", output)
 
 
 class RunCanaryTests(unittest.TestCase):
