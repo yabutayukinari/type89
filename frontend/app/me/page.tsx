@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { NotificationsPanel } from '@/components/NotificationsPanel';
@@ -43,6 +44,13 @@ export default function UserDashboardPage() {
       </dl>
 
       <hr className="border-zinc-200 dark:border-zinc-800" />
+
+      <Link
+        href="/performances"
+        className="rounded border border-zinc-300 px-4 py-2 text-center text-base font-medium dark:border-zinc-700"
+      >
+        公演チケットを見る
+      </Link>
 
       <NotificationsPanel userId={auth.principal.id} />
 

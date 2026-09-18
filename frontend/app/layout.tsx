@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "type89",
-  description: "Laravel + Next.js auction practice",
+  title: "type89 Tickets",
+  description: "Flash ticket sales demo — Laravel API + Next.js + Reverb",
 };
 
 export default function RootLayout({

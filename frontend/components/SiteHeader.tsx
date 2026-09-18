@@ -13,8 +13,8 @@ const ITEM = 64;
 const IconHome = (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 10.5 12 3l9 7.5" /><path d="M5 9.5V21h14V9.5" /></svg>
 );
-const IconTag = (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12V4h8l10 10-8 8L3 12Z" /><circle cx="7.5" cy="7.5" r="1.5" /></svg>
+const IconTicket = (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9V7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v2" /><path d="M3 15v2a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-2" /><path d="M3 12h3a2 2 0 1 1 4 0h4a2 2 0 1 1 4 0h3" /></svg>
 );
 const IconUser = (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="4" /><path d="M4 20c0-3.3 3.6-5.5 8-5.5s8 2.2 8 5.5" /></svg>
@@ -42,7 +42,7 @@ export function SiteHeader() {
 
   const tabs: Tab[] = [
     { href: '/', label: 'ホーム', icon: IconHome },
-    { href: '/auctions', label: 'オークション', icon: IconTag },
+    { href: '/performances', label: 'チケット', icon: IconTicket },
     isAuthed
       ? { href: '/me', label: 'マイページ', icon: IconUser }
       : { href: '/login', label: 'ログイン', icon: IconLogin },
@@ -52,8 +52,8 @@ export function SiteHeader() {
     tabs.findIndex((t) =>
       t.href === '/'
         ? pathname === '/'
-        : t.href === '/auctions'
-          ? pathname === '/auctions' || pathname?.startsWith('/auctions/') === true
+        : t.href === '/performances'
+          ? pathname === '/performances' || pathname?.startsWith('/performances/') === true
           : pathname === t.href,
     );
   const activeIndex = matchIndex();
@@ -71,7 +71,7 @@ export function SiteHeader() {
         <div className="mx-auto flex h-14 w-full max-w-5xl items-center justify-between px-4">
           <Link href="/" className="flex items-center gap-1.5 font-extrabold tracking-tight">
             <span className="text-amber-400">⚡</span>
-            type89 <span className="font-semibold text-zinc-400">Auctions</span>
+            type89 <span className="font-semibold text-zinc-400">Tickets</span>
           </Link>
 
           <nav className="hidden items-center gap-1 md:flex">
@@ -79,8 +79,8 @@ export function SiteHeader() {
               .filter((t) => t.href !== '/')
               .map((tab) => {
                 const active =
-                  tab.href === '/auctions'
-                    ? pathname === '/auctions' || pathname?.startsWith('/auctions/') === true
+                  tab.href === '/performances'
+                    ? pathname === '/performances' || pathname?.startsWith('/performances/') === true
                     : pathname === tab.href;
                 return (
                   <Link
