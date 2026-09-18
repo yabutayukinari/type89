@@ -13,8 +13,11 @@ use App\Models\Performance;
 use App\Models\PurchaseSlot;
 use App\Models\QueueEntry;
 use App\Models\User;
+use App\Services\QueueAdmission;
+use App\Services\TicketQueueService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
+use Mockery\MockInterface;
 use RuntimeException;
 use Tests\TestCase;
 
@@ -350,5 +353,30 @@ class PerformanceQueueTest extends TestCase
             ->assertJsonPath('data.queue_entry.status', QueueEntryStatus::Admitted->value);
 
         $this->assertSame(1, PurchaseSlot::query()->where('user_id', $user->id)->count());
+    }
+
+    public function test_join_does_not_broadcast_personal_update_when_queue_entry_is_missing(): void
+    {
+        Event::fake();
+
+        $performance = Performance::factory()->create();
+        $performance->load(['show', 'seatInventory']);
+        $user = User::factory()->create();
+
+        $this->mock(TicketQueueService::class, function (MockInterface $mock) use ($performance): void {
+            $mock->shouldReceive('join')
+                ->once()
+                ->andReturn(new QueueAdmission($performance, null, null));
+        });
+
+        $this->actingAs($user)
+            ->postJson("/api/performances/{$performance->id}/queue")
+            ->assertOk()
+            ->assertJsonPath('data.queue_entry', null)
+            ->assertJsonPath('data.purchase_slot', null);
+
+        Event::assertNotDispatched(QueueAdmissionUpdated::class);
+        Event::assertNotDispatched(SeatsUpdated::class);
+        Event::assertNotDispatched(PurchaseSlotAssigned::class);
     }
 }
