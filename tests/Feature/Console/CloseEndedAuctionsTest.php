@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Tests\Feature\Console;
 
@@ -14,7 +16,7 @@ class CloseEndedAuctionsTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function testSettlesEndedAuctionAndNotifiesSellerAndWinner(): void
+    public function test_settles_ended_auction_and_notifies_seller_and_winner(): void
     {
         Notification::fake();
 
@@ -35,7 +37,7 @@ class CloseEndedAuctionsTest extends TestCase
         Notification::assertSentTo($winner, AuctionSettled::class);
     }
 
-    public function testNotifiesOnlySellerWhenNoWinner(): void
+    public function test_notifies_only_seller_when_no_winner(): void
     {
         Notification::fake();
 
@@ -51,7 +53,7 @@ class CloseEndedAuctionsTest extends TestCase
         Notification::assertCount(1);
     }
 
-    public function testDoesNotSettleActiveAuction(): void
+    public function test_does_not_settle_active_auction(): void
     {
         Notification::fake();
 
@@ -63,7 +65,7 @@ class CloseEndedAuctionsTest extends TestCase
         Notification::assertNothingSent();
     }
 
-    public function testIsIdempotentAcrossRuns(): void
+    public function test_is_idempotent_across_runs(): void
     {
         Notification::fake();
 

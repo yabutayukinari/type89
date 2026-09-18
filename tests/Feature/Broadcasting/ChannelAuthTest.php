@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Tests\Feature\Broadcasting;
 
@@ -31,21 +33,21 @@ class ChannelAuthTest extends TestCase
         return $channels;
     }
 
-    public function testPublicPingChannelAuthorizesAnyone(): void
+    public function test_public_ping_channel_authorizes_anyone(): void
     {
         $callback = $this->registeredChannels()['public.ping'];
 
         $this->assertTrue($callback(null));
     }
 
-    public function testAuctionChannelAuthorizesAnyone(): void
+    public function test_auction_channel_authorizes_anyone(): void
     {
         $callback = $this->registeredChannels()['auction.{auctionId}'];
 
         $this->assertTrue($callback(null, 42));
     }
 
-    public function testAuctionPresenceChannelReturnsMemberInfoForAuthenticatedUser(): void
+    public function test_auction_presence_channel_returns_member_info_for_authenticated_user(): void
     {
         $user = User::factory()->create(['name' => 'Alice']);
         $callback = $this->registeredChannels()['auction-presence.{auctionId}'];
@@ -53,7 +55,7 @@ class ChannelAuthTest extends TestCase
         $this->assertSame(['id' => $user->id, 'name' => 'Alice'], $callback($user, 7));
     }
 
-    public function testUserChannelAuthorizesMatchingUser(): void
+    public function test_user_channel_authorizes_matching_user(): void
     {
         $user = User::factory()->create();
         $callback = $this->registeredChannels()['user.{userId}'];
@@ -61,7 +63,7 @@ class ChannelAuthTest extends TestCase
         $this->assertTrue($callback($user, $user->id));
     }
 
-    public function testUserChannelRejectsDifferentUser(): void
+    public function test_user_channel_rejects_different_user(): void
     {
         $user = User::factory()->create();
         $other = User::factory()->create();

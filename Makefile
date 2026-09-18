@@ -105,12 +105,11 @@ logs: ## Tail container logs
 test: ## Run the test suite
 	@$(SAIL) composer test
 
-build: ## Run all static analysis (csf + cs + sa + md)
+build: ## Run all static analysis (pint + sa + md)
 	@$(SAIL) composer build
 
-fix: ## Auto-fix code style (PHP CS Fixer + PHP CodeSniffer)
-	@$(SAIL) composer csf-fix
-	@$(SAIL) composer cs-fix
+fix: ## Auto-fix PHP code style with Laravel Pint
+	@$(SAIL) composer pint-fix
 
 migrate: ## Run pending migrations
 	@$(SAIL) artisan migrate

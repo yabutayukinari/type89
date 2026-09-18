@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace App\Models;
 
@@ -14,7 +16,6 @@ use Illuminate\Support\Carbon;
  * @property int $user_id
  * @property int $amount
  * @property Carbon $created_at
- *
  * @property-read Auction $auction
  * @property-read User $bidder
  */

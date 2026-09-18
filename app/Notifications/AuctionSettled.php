@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace App\Notifications;
 
@@ -19,9 +21,7 @@ use Illuminate\Notifications\Notification;
  */
 class AuctionSettled extends Notification
 {
-    public function __construct(public Auction $auction)
-    {
-    }
+    public function __construct(public Auction $auction) {}
 
     /**
      * @return array<int, string>

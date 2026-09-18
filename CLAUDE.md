@@ -19,8 +19,8 @@ The project runs entirely inside Laravel Sail containers — local PHP / Compose
 - `make shell` - Shell into the app container
 - `make ps` / `make logs` - Container status / tail logs
 - `make test` - Run the test suite (`sail composer test`)
-- `make build` - All static analysis (csf + cs + sa + md)
-- `make fix` - Auto-fix code style (PHP CS Fixer + PHP CodeSniffer)
+- `make build` - All static analysis (pint + sa + md)
+- `make fix` - Auto-fix PHP code style with Laravel Pint
 - `make migrate` - Run pending migrations
 
 ### Frontend
@@ -32,14 +32,12 @@ The Next.js frontend lives in a separate directory (`frontend/`) and is run inde
 - `./vendor/bin/sail bin phpunit tests/Feature/...` - Run specific test file
 
 ### Code Analysis
-- `./vendor/bin/sail composer csf` - Check PHP coding style (PHP CS Fixer, dry-run mode)
-- `./vendor/bin/sail composer csf-fix` - Fix PHP coding style issues (PHP CS Fixer)
-- `./vendor/bin/sail composer cs` - Check code style with PHP CodeSniffer
-- `./vendor/bin/sail composer cs-fix` - Fix code style issues with PHP CodeSniffer
+- `./vendor/bin/sail composer pint` - Check PHP coding style (Laravel Pint, `--test` mode)
+- `./vendor/bin/sail composer pint-fix` - Fix PHP coding style issues (Laravel Pint)
 - `./vendor/bin/sail composer sa` - Run static analysis (Larastan/PHPStan)
 - `./vendor/bin/sail composer md` - Run mess detection (PHPMD)
-- `./vendor/bin/sail composer build` - Run all analysis tools without tests (csf, cs, sa, md) — also `make build`
-- `./vendor/bin/sail composer tests` - Run all checks including tests (csf, cs, sa, md, test)
+- `./vendor/bin/sail composer build` - Run all analysis tools without tests (pint, sa, md) — also `make build`
+- `./vendor/bin/sail composer tests` - Run all checks including tests (pint, sa, md, test)
 
 ### Database Setup for Tests
 Tests run against the dedicated `mysql.test` Sail container (MySQL 8 on tmpfs for speed). `make setup` generates `.env.testing` from `.env.example` automatically — no manual database setup is required.
@@ -67,14 +65,12 @@ Tests run against the dedicated `mysql.test` Sail container (MySQL 8 on tmpfs fo
 ### Code Quality Standards
 
 **PHP Coding Standards:**
-- PSR-2 with custom extensions via PHP-CS-Fixer configuration
-- Strict types enabled (`declare(strict_types=1)`)
-- Global namespace imports enabled (classes, constants, functions)
+- Laravel Pint with the `laravel` preset (PSR-12 / Laravel convention)
+- Strict types enabled (`declare(strict_types=1)`), required via `pint.json`
 
 **Static Analysis:**
 - Larastan (PHPStan) for strict type checking on Laravel code
 - PHPMD for complexity and code smell detection with custom rules
-- PHP CodeSniffer for PSR-2 compliance
 
 **Testing:**
 - PHPUnit 12 for unit and feature tests

@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Tests\Unit\Notifications;
 
@@ -12,7 +14,7 @@ class AuctionSettledTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function testBuildsWinnerPayload(): void
+    public function test_builds_winner_payload(): void
     {
         $winner = User::factory()->create();
         $auction = Auction::factory()->create([
@@ -29,7 +31,7 @@ class AuctionSettledTest extends TestCase
         $this->assertStringContainsString('落札しました', $data['message']);
     }
 
-    public function testBuildsSellerPayloadWhenSold(): void
+    public function test_builds_seller_payload_when_sold(): void
     {
         $seller = User::factory()->create();
         $winner = User::factory()->create();
@@ -46,7 +48,7 @@ class AuctionSettledTest extends TestCase
         $this->assertStringContainsString('落札されました', $data['message']);
     }
 
-    public function testBuildsSellerPayloadWhenNoWinner(): void
+    public function test_builds_seller_payload_when_no_winner(): void
     {
         $seller = User::factory()->create();
         $auction = Auction::factory()->create([

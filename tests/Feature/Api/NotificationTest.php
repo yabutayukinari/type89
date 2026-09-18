@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Tests\Feature\Api;
 
@@ -20,7 +22,7 @@ class NotificationTest extends TestCase
         $this->withHeader('Origin', 'http://localhost:3000');
     }
 
-    public function testIndexReturnsNotificationsWithUnreadCount(): void
+    public function test_index_returns_notifications_with_unread_count(): void
     {
         $user = User::factory()->create();
         $auction = Auction::factory()->create(['current_winner_user_id' => $user->id]);
@@ -34,7 +36,7 @@ class NotificationTest extends TestCase
             ->assertJsonPath('data.0.data.role', 'winner');
     }
 
-    public function testMarkAllReadClearsUnreadCount(): void
+    public function test_mark_all_read_clears_unread_count(): void
     {
         $user = User::factory()->create();
         $auction = Auction::factory()->create(['current_winner_user_id' => $user->id]);
@@ -46,7 +48,7 @@ class NotificationTest extends TestCase
         $this->assertSame(0, $user->unreadNotifications()->count());
     }
 
-    public function testIndexRequiresAuthentication(): void
+    public function test_index_requires_authentication(): void
     {
         $this->getJson('/api/notifications')->assertStatus(401);
     }

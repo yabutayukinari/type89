@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Tests\Feature\Api;
 
@@ -19,7 +21,7 @@ class AuthTest extends TestCase
         $this->withHeader('Origin', 'http://localhost:3000');
     }
 
-    public function testLoginSucceedsAndReturnsUserResource(): void
+    public function test_login_succeeds_and_returns_user_resource(): void
     {
         $user = User::factory()->create([
             'email' => 'user@example.com',
@@ -42,7 +44,7 @@ class AuthTest extends TestCase
         $this->assertAuthenticatedAs($user);
     }
 
-    public function testLoginFailsWithInvalidCredentials(): void
+    public function test_login_fails_with_invalid_credentials(): void
     {
         User::factory()->create([
             'email' => 'user@example.com',
@@ -60,7 +62,7 @@ class AuthTest extends TestCase
         $this->assertGuest();
     }
 
-    public function testLoginValidatesRequiredFields(): void
+    public function test_login_validates_required_fields(): void
     {
         $response = $this->postJson('/api/login', []);
 
@@ -68,14 +70,14 @@ class AuthTest extends TestCase
             ->assertJsonValidationErrors(['email', 'password']);
     }
 
-    public function testMeRequiresAuthentication(): void
+    public function test_me_requires_authentication(): void
     {
         $response = $this->getJson('/api/me');
 
         $response->assertStatus(401);
     }
 
-    public function testMeReturnsCurrentUser(): void
+    public function test_me_returns_current_user(): void
     {
         $user = User::factory()->create();
 
@@ -90,7 +92,7 @@ class AuthTest extends TestCase
             ]);
     }
 
-    public function testLogoutInvalidatesSession(): void
+    public function test_logout_invalidates_session(): void
     {
         $user = User::factory()->create();
 
@@ -100,7 +102,7 @@ class AuthTest extends TestCase
         $this->assertGuest();
     }
 
-    public function testLogoutRequiresAuthentication(): void
+    public function test_logout_requires_authentication(): void
     {
         $response = $this->postJson('/api/logout');
 

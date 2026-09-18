@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace App\Events;
 
@@ -28,9 +30,7 @@ class BidPlaced implements ShouldBroadcast
      * SerializesModels trait のおかげで、キュー経由で渡される際は
      * Bid モデルが ID にシリアライズされ、受信側で自動的に再フェッチされる。
      */
-    public function __construct(public Bid $bid)
-    {
-    }
+    public function __construct(public Bid $bid) {}
 
     /**
      * このイベントを流すブロードキャストチャンネルを返す。

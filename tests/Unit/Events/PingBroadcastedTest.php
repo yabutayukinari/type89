@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Tests\Unit\Events;
 
@@ -8,7 +10,7 @@ use Tests\TestCase;
 
 class PingBroadcastedTest extends TestCase
 {
-    public function testBroadcastOnReturnsPublicPingChannel(): void
+    public function test_broadcast_on_returns_public_ping_channel(): void
     {
         $channels = (new PingBroadcasted('hello', '2026-01-01T00:00:00+00:00'))->broadcastOn();
 
@@ -17,14 +19,14 @@ class PingBroadcastedTest extends TestCase
         $this->assertSame('public.ping', $channels[0]->name);
     }
 
-    public function testBroadcastAsReturnsPing(): void
+    public function test_broadcast_as_returns_ping(): void
     {
         $event = new PingBroadcasted('hello', '2026-01-01T00:00:00+00:00');
 
         $this->assertSame('ping', $event->broadcastAs());
     }
 
-    public function testBroadcastWithReturnsMessageAndEmittedAt(): void
+    public function test_broadcast_with_returns_message_and_emitted_at(): void
     {
         $event = new PingBroadcasted('hello', '2026-01-01T00:00:00+00:00');
 
