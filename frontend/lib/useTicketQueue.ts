@@ -62,6 +62,7 @@ export const useTicketQueue = (
   const prevWaitingAhead = useRef<number | null>(null);
   const connectionStateRef = useRef(connectionState);
   const liveAdmissionRef = useRef<QueueAdmission | null>(null);
+  const fetchGen = useRef(0);
 
   const userId = auth.state === 'authenticated' ? auth.principal.id : null;
   const isAuthenticated = auth.state === 'authenticated';
@@ -104,7 +105,10 @@ export const useTicketQueue = (
   );
 
   const commitAdmission = useCallback(
-    (incoming: QueueAdmission, options?: { ignoreStaleSeats?: boolean }) => {
+    (incoming: QueueAdmission, options?: { ignoreStaleSeats?: boolean; gen?: number }) => {
+      if (options?.gen !== undefined && options.gen !== fetchGen.current) {
+        return;
+      }
       const previous = liveAdmissionRef.current ?? (userId !== null ? readQueueCache(userId, performanceId) : null);
       const merged = mergeAdmission(previous, incoming);
       const nextPerformance =
@@ -145,8 +149,10 @@ export const useTicketQueue = (
     if (!isAuthenticated) {
       return;
     }
+    const gen = fetchGen.current + 1;
+    fetchGen.current = gen;
     const data = await fetchQueueStatus(performanceId);
-    commitAdmission(data, { ignoreStaleSeats: connectionStateRef.current !== 'live' });
+    commitAdmission(data, { ignoreStaleSeats: connectionStateRef.current !== 'live', gen });
   }, [commitAdmission, isAuthenticated, performanceId]);
 
   useEffect(() => {
@@ -169,7 +175,9 @@ export const useTicketQueue = (
     fetchQueueStatus(performanceId)
       .then((data) => {
         if (!cancelled) {
-          commitAdmission(data);
+          const gen = fetchGen.current + 1;
+          fetchGen.current = gen;
+          commitAdmission(data, { gen });
         }
       })
       .catch(() => {
@@ -206,29 +214,20 @@ export const useTicketQueue = (
     const echo = getEcho();
     const channel = echo.channel(`performance.${performanceId}`);
     channel.listen('.seats.updated', (payload: SeatsUpdatedPayload) => {
-      setLivePerformance((prev) => {
-        if (!prev) {
-          return prev;
-        }
-        const next = applySeatUpdate(prev, payload);
-        const remainingNotice = seatChangeNotice(
-          prevRemaining.current,
-          next.remaining_seats,
-          liveAdmissionRef.current?.purchase_slot != null,
-        );
-        if (remainingNotice) {
-          setNotices((current) => pushNotice(current, remainingNotice));
-          bumpFlash();
-        }
-        prevRemaining.current = next.remaining_seats;
-        return next;
-      });
+      setLivePerformance((prev) => (prev ? applySeatUpdate(prev, payload) : prev));
       setLiveAdmission((prev) =>
         prev ? { ...prev, performance: applySeatUpdate(prev.performance, payload) } : prev,
       );
       if (isAuthenticated) {
         void refreshStatus();
+        return;
       }
+      const remainingNotice = seatChangeNotice(prevRemaining.current, payload.remaining_seats, false);
+      if (remainingNotice) {
+        setNotices((current) => pushNotice(current, remainingNotice));
+        bumpFlash();
+      }
+      prevRemaining.current = payload.remaining_seats;
     });
     return () => {
       echo.leave(`performance.${performanceId}`);
@@ -252,7 +251,9 @@ export const useTicketQueue = (
       if (payload.performance.id !== performanceId) {
         return;
       }
-      commitAdmission(payload);
+      const gen = fetchGen.current + 1;
+      fetchGen.current = gen;
+      commitAdmission(payload, { gen });
     };
     channel.listen('.slot.assigned', onAssigned);
     channel.listen('.queue.updated', onQueueUpdated);
@@ -271,7 +272,9 @@ export const useTicketQueue = (
         return;
       }
       try {
-        commitAdmission(JSON.parse(event.newValue) as QueueAdmission);
+        const gen = fetchGen.current + 1;
+        fetchGen.current = gen;
+        commitAdmission(JSON.parse(event.newValue) as QueueAdmission, { gen });
       } catch {
         // ignore malformed cache from another tab
       }
@@ -299,13 +302,17 @@ export const useTicketQueue = (
     setError(null);
     setSubmitting(true);
     try {
+      const gen = fetchGen.current + 1;
+      fetchGen.current = gen;
       const next = await joinQueue(performanceId);
-      commitAdmission(next);
+      commitAdmission(next, { gen });
     } catch (err: unknown) {
       try {
+        const gen = fetchGen.current + 1;
+        fetchGen.current = gen;
         const recovered = await fetchQueueStatus(performanceId);
         if (recovered.queue_entry !== null) {
-          commitAdmission(recovered);
+          commitAdmission(recovered, { gen });
           setError(null);
           return;
         }

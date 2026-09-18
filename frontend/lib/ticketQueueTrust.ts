@@ -155,22 +155,12 @@ export const applySeatUpdate = (performance: Performance, incoming: SeatsUpdated
 };
 
 /**
- * Slots are never revoked. Keep a locally known slot if a refetch/event would
- * flash it as missing, and never swap in a second slot id for the same user.
+ * Slots are never revoked by this demo, but an authoritative 200 from join/status
+ * wins over a cached slot. Only collapse two different slot ids onto the first.
  */
 export const mergeAdmission = (previous: QueueAdmission | null, incoming: QueueAdmission): QueueAdmission => {
   if (previous?.purchase_slot && incoming.purchase_slot && previous.purchase_slot.id !== incoming.purchase_slot.id) {
     return { ...incoming, purchase_slot: previous.purchase_slot };
-  }
-  if (previous?.purchase_slot && incoming.purchase_slot === null) {
-    const queueEntry = incoming.queue_entry ?? previous.queue_entry;
-    return {
-      ...incoming,
-      purchase_slot: previous.purchase_slot,
-      queue_entry: queueEntry
-        ? { ...queueEntry, status: 'admitted' }
-        : queueEntry,
-    };
   }
   return incoming;
 };
