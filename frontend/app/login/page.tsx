@@ -1,6 +1,6 @@
 'use client';
 
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';
 import LoginForm from '@/components/LoginForm';
 import { loginUser } from '@/lib/auth';
@@ -19,13 +19,12 @@ export default function UserLoginPage() {
 }
 
 function UserLoginForm() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const next = safeNextPath(searchParams.get('next'));
 
   const handleSubmit = async (email: string, password: string) => {
     await loginUser(email, password);
-    router.push(next);
+    window.location.assign(next);
   };
 
   return (
