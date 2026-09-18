@@ -41,6 +41,7 @@ class SeatsUpdated implements ShouldBroadcast
             'performance_id' => $inventory->performance_id,
             'capacity' => $inventory->capacity,
             'remaining_seats' => $inventory->remaining_seats,
+            'inventory_updated_at' => $inventory->updated_at->toIso8601String(),
         ];
     }
 }

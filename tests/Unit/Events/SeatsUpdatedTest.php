@@ -47,5 +47,6 @@ class SeatsUpdatedTest extends TestCase
         $this->assertSame($performance->id, $payload['performance_id']);
         $this->assertSame(8, $payload['capacity']);
         $this->assertSame(5, $payload['remaining_seats']);
+        $this->assertSame($inventory->updated_at->toIso8601String(), $payload['inventory_updated_at']);
     }
 }

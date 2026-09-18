@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api;
 
 use App\Events\PurchaseSlotAssigned;
+use App\Events\QueueAdmissionUpdated;
 use App\Events\SeatsUpdated;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\QueueAdmissionResource;
@@ -24,7 +25,10 @@ class PerformanceQueueController extends Controller
         /** @var User $user */
         $user = Auth::guard('web')->user();
 
-        return new QueueAdmissionResource($this->ticketQueue->status($performance, $user));
+        $admission = $this->ticketQueue->status($performance, $user);
+        $this->broadcastNewAssignments($admission);
+
+        return new QueueAdmissionResource($admission);
     }
 
     public function store(Performance $performance): JsonResource
@@ -33,12 +37,13 @@ class PerformanceQueueController extends Controller
         $user = Auth::guard('web')->user();
 
         $admission = $this->ticketQueue->join($performance, $user);
-        $this->broadcastAdmission($admission);
+        $this->broadcastNewAssignments($admission);
+        $this->broadcastPersonalUpdate($admission);
 
         return new QueueAdmissionResource($admission);
     }
 
-    private function broadcastAdmission(QueueAdmission $admission): void
+    private function broadcastNewAssignments(QueueAdmission $admission): void
     {
         if ($admission->newlyAssignedSlots === []) {
             return;
@@ -52,5 +57,17 @@ class PerformanceQueueController extends Controller
         foreach ($admission->newlyAssignedSlots as $slot) {
             broadcast(new PurchaseSlotAssigned($slot));
         }
+    }
+
+    private function broadcastPersonalUpdate(QueueAdmission $admission): void
+    {
+        if ($admission->queueEntry === null) {
+            return;
+        }
+
+        broadcast(new QueueAdmissionUpdated(
+            $admission->queueEntry->user_id,
+            (new QueueAdmissionResource($admission))->resolve(),
+        ));
     }
 }
