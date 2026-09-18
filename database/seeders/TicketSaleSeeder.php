@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Database\Seeders;
 
+use App\Enums\AdminRole;
+use App\Models\Admin;
 use App\Models\Performance;
 use App\Models\Show;
 use App\Models\User;
@@ -19,6 +21,7 @@ class TicketSaleSeeder extends Seeder
     public function run(): void
     {
         $this->seedPurchasers();
+        $this->seedOrganizer();
         $this->seedDemoPerformance();
     }
 
@@ -41,12 +44,24 @@ class TicketSaleSeeder extends Seeder
         }
     }
 
+    private function seedOrganizer(): void
+    {
+        Admin::firstOrCreate(
+            ['email' => 'admin@example.com'],
+            [
+                'name' => '会場スタッフ',
+                'password' => Hash::make('password'),
+                'role' => AdminRole::SystemAdmin,
+            ],
+        );
+    }
+
     private function seedDemoPerformance(): void
     {
         $show = Show::firstOrCreate(
             ['title' => 'MIDNIGHT CIRCUIT VOL.12'],
             [
-                'description' => "倉庫を使ったミッドサイズのクラブナイト。\nフラッシュ需要のチケット販売デモです。決済は行いません。1人1枠まで。",
+                'description' => "倉庫を使ったミッドサイズのクラブナイト。\nフラッシュ需要のチケット販売デモです。仮確保は3分で期限切れになり、確定するまで席は確定しません。確定後のキャンセルと決済はありません。1人1枠まで。",
                 'venue_label' => 'CLUB BAY / 東京',
             ],
         );

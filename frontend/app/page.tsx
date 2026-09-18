@@ -33,7 +33,7 @@ const features = [
 const steps = [
   { n: '01', title: 'ログイン', body: 'デモは test_user@example.com / test1111。別ブラウザなら demo2@example.com でも並べます。' },
   { n: '02', title: '待機列に並ぶ', body: '販売中の公演を開き、待機列へ。空席があれば先着で購入枠が入ります。' },
-  { n: '03', title: '残席を見る', body: '枠が埋まると残席がリアルタイムに減ります。決済は行わないデモです。' },
+  { n: '03', title: '確定する', body: '仮確保は数分で期限切れ。期限内に確定すると TTL もキャンセルもありません。決済は行いません。' },
 ];
 
 export default function Home() {
@@ -78,7 +78,7 @@ export default function Home() {
               </span>
             </h1>
             <p className="max-w-md text-base leading-relaxed text-zinc-400">
-              ミッドサイズのライブ・フェス・クラブ向けチケット販売のデモ。待機列に並び、1人1枠だけ購入枠を受け取り、残席はリアルタイムに減ります。
+              ミッドサイズのライブ・フェス・クラブ向けチケット販売のデモ。待機列に並び、1人1枠を仮確保して確定します。確定前の枠は数分で期限切れになり、待機列の先頭へ戻ります。
             </p>
             <div className="flex flex-wrap items-center gap-3 pt-1">
               <Link

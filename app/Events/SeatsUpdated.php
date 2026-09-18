@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Events;
 
+use App\Enums\SeatUpdateReason;
+use App\Enums\SlotReleaseReason;
 use App\Models\SeatInventory;
 use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
@@ -15,7 +17,11 @@ class SeatsUpdated implements ShouldBroadcast
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
-    public function __construct(public SeatInventory $inventory) {}
+    public function __construct(
+        public SeatInventory $inventory,
+        public SeatUpdateReason $reason = SeatUpdateReason::Assigned,
+        public ?SlotReleaseReason $releaseReason = null,
+    ) {}
 
     /**
      * @return array<int, Channel>
@@ -42,6 +48,8 @@ class SeatsUpdated implements ShouldBroadcast
             'capacity' => $inventory->capacity,
             'remaining_seats' => $inventory->remaining_seats,
             'inventory_updated_at' => $inventory->updated_at->toIso8601String(),
+            'reason' => $this->reason->value,
+            'release_reason' => $this->releaseReason?->value,
         ];
     }
 }

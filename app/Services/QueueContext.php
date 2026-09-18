@@ -30,7 +30,7 @@ final readonly class QueueContext
             ->count();
         $admittedCount = QueueEntry::query()
             ->where('performance_id', $performance->id)
-            ->where('status', QueueEntryStatus::Admitted)
+            ->whereIn('status', [QueueEntryStatus::Admitted, QueueEntryStatus::Confirmed])
             ->count();
 
         $waitingAhead = 0;

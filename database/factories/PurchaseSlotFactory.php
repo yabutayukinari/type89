@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Database\Factories;
 
+use App\Enums\PurchaseSlotStatus;
 use App\Models\PurchaseSlot;
 use App\Models\QueueEntry;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -24,8 +25,13 @@ class PurchaseSlotFactory extends Factory
      */
     public function definition(): array
     {
+        $assignedAt = Carbon::now();
+
         return [
-            'assigned_at' => Carbon::now(),
+            'status' => PurchaseSlotStatus::Held,
+            'assigned_at' => $assignedAt,
+            'expires_at' => $assignedAt->copy()->addSeconds((int) config('ticket.hold_ttl_seconds')),
+            'confirmed_at' => null,
         ];
     }
 
@@ -49,5 +55,32 @@ class PurchaseSlotFactory extends Factory
             $slot->user_id = $entry->user_id;
             $slot->queue_entry_id = $entry->id;
         });
+    }
+
+    public function held(): static
+    {
+        return $this->state(fn (): array => [
+            'status' => PurchaseSlotStatus::Held,
+            'confirmed_at' => null,
+        ]);
+    }
+
+    public function confirmed(): static
+    {
+        return $this->state(fn (): array => [
+            'status' => PurchaseSlotStatus::Confirmed,
+            'expires_at' => null,
+            'confirmed_at' => Carbon::now(),
+        ]);
+    }
+
+    public function expiredHold(): static
+    {
+        return $this->state(fn (): array => [
+            'status' => PurchaseSlotStatus::Held,
+            'assigned_at' => Carbon::now()->subMinutes(10),
+            'expires_at' => Carbon::now()->subMinute(),
+            'confirmed_at' => null,
+        ]);
     }
 }

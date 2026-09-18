@@ -41,4 +41,25 @@ class QueueEntryFactory extends Factory
             'status' => QueueEntryStatus::Admitted,
         ]);
     }
+
+    public function confirmed(): static
+    {
+        return $this->state([
+            'status' => QueueEntryStatus::Confirmed,
+        ]);
+    }
+
+    public function cancelled(): static
+    {
+        return $this->state([
+            'status' => QueueEntryStatus::Cancelled,
+        ]);
+    }
+
+    public function expired(): static
+    {
+        return $this->state([
+            'status' => QueueEntryStatus::Expired,
+        ]);
+    }
 }

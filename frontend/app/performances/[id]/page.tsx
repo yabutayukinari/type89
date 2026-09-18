@@ -1,10 +1,10 @@
 'use client';
 
 import Link from 'next/link';
-import { use, useMemo } from 'react';
+import { use, useMemo, useState } from 'react';
 import { useUser } from '@/lib/auth';
 import { useCountdown } from '@/lib/countdown';
-import { connectionCopy, waitReasonCopy } from '@/lib/ticketQueueTrust';
+import { connectionCopy, holdTtlCopy, slotReleaseCopy, waitReasonCopy } from '@/lib/ticketQueueTrust';
 import { useTicketQueue } from '@/lib/useTicketQueue';
 
 type Props = { params: Promise<{ id: string }> };
@@ -14,7 +14,8 @@ const yen = (n: number): string => `¥${n.toLocaleString('ja-JP')}`;
 const joinSteps = [
   { key: 'idle' as const, label: '未参加' },
   { key: 'waiting' as const, label: '待機中' },
-  { key: 'secured' as const, label: '枠確保' },
+  { key: 'held' as const, label: '仮確保' },
+  { key: 'confirmed' as const, label: '確定' },
 ];
 
 const relativeTime = (timestamp: number | null): string => {
@@ -36,17 +37,47 @@ export default function PerformanceDetailPage({ params }: Props) {
   const performanceId = Number(id);
   const { auth } = useUser();
   const queue = useTicketQueue(performanceId, auth);
-  const { performance, admission, error, submitting, ready, flash, notices, connectionState, inventoryStale, lastSyncedAt, handleJoin } =
-    queue;
+  const {
+    performance,
+    admission,
+    error,
+    submitting,
+    confirming,
+    cancelling,
+    ready,
+    flash,
+    notices,
+    connectionState,
+    inventoryStale,
+    lastSyncedAt,
+    handleJoin,
+    handleConfirm,
+    handleCancel,
+  } = queue;
+  const [cancelOpen, setCancelOpen] = useState(false);
 
   const saleCountdown = useCountdown(performance?.sale_opens_at ?? new Date().toISOString());
   const closeCountdown = useCountdown(performance?.sale_closes_at ?? new Date().toISOString());
+  const holdCountdown = useCountdown(admission?.purchase_slot?.expires_at ?? new Date().toISOString());
 
   const isAuthenticated = auth.state === 'authenticated';
-  const hasSlot = admission?.purchase_slot != null;
-  const inQueue = admission?.queue_entry != null;
-  const joinState: 'idle' | 'waiting' | 'secured' = hasSlot ? 'secured' : inQueue ? 'waiting' : 'idle';
+  const slot = admission?.purchase_slot ?? null;
+  const hasSlot = slot != null;
+  const isHeld = slot?.status === 'held';
+  const isConfirmed = slot?.status === 'confirmed';
+  const entryStatus = admission?.queue_entry?.status;
+  const released = entryStatus === 'cancelled' || entryStatus === 'expired';
+  const inQueue = admission?.queue_entry != null && !released;
+  const joinState: (typeof joinSteps)[number]['key'] = isConfirmed
+    ? 'confirmed'
+    : isHeld
+      ? 'held'
+      : inQueue
+        ? 'waiting'
+        : 'idle';
   const joinDisabled = submitting || joinState !== 'idle';
+  const ttlSeconds = admission?.hold_ttl_seconds ?? performance?.hold_ttl_seconds ?? 180;
+  const releaseCopy = slotReleaseCopy(admission?.slot_release ?? null, entryStatus);
 
   const waitCopy = useMemo(
     () => waitReasonCopy(admission?.wait_reason ?? null, admission?.admitted_count ?? 0, admission?.waiting_ahead ?? 0),
@@ -86,7 +117,7 @@ export default function PerformanceDetailPage({ params }: Props) {
           <p className="mt-2 text-sm text-zinc-400">{new Date(performance.starts_at).toLocaleString('ja-JP')}</p>
         </div>
 
-        <ol className="grid grid-cols-3 gap-2" aria-label="参加の状態">
+        <ol className="grid grid-cols-4 gap-2" aria-label="参加の状態">
           {joinSteps.map((step, i) => {
             const isCurrent = i === joinStateIndex;
             const isDone = i < joinStateIndex;
@@ -96,10 +127,10 @@ export default function PerformanceDetailPage({ params }: Props) {
                 aria-current={isCurrent ? 'step' : undefined}
                 className={
                   isCurrent
-                    ? 'rounded-xl border border-fuchsia-400/40 bg-fuchsia-500/10 px-3 py-2 text-center text-sm font-bold text-fuchsia-200'
+                    ? 'rounded-xl border border-fuchsia-400/40 bg-fuchsia-500/10 px-2 py-2 text-center text-xs font-bold text-fuchsia-200 sm:text-sm'
                     : isDone
-                      ? 'rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2 text-center text-sm font-semibold text-zinc-300'
-                      : 'rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2 text-center text-sm text-zinc-500'
+                      ? 'rounded-xl border border-zinc-700 bg-zinc-900 px-2 py-2 text-center text-xs font-semibold text-zinc-300 sm:text-sm'
+                      : 'rounded-xl border border-zinc-800 bg-zinc-950 px-2 py-2 text-center text-xs text-zinc-500 sm:text-sm'
                 }
               >
                 {step.label}
@@ -108,19 +139,37 @@ export default function PerformanceDetailPage({ params }: Props) {
           })}
         </ol>
 
-        {hasSlot && (
+        {isConfirmed && (
           <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-5">
-            <p className="text-4xl font-black tracking-tight text-emerald-300 md:text-5xl">枠取れた！</p>
-            <p className="mt-2 text-sm text-zinc-200">このアカウントの購入枠は1つだけ確保済みです。決済は行いません。</p>
+            <p className="text-4xl font-black tracking-tight text-emerald-300 md:text-5xl">購入確定</p>
+            <p className="mt-2 text-sm text-zinc-200">このアカウントの枠は確定済みです。決済はありません。期限切れにも、ここからのキャンセルにもなりません。</p>
             {soldOut ? (
               <p className="mt-3 text-sm leading-relaxed text-emerald-100/90">
-                全体の残り席は0（満席）ですが、それは他の人向けの数字です。あなたの枠はすでに確保されており、全体残席には含まれません。
+                全体の残り席は0（満席）ですが、それは他の人向けの数字です。あなたの確定枠はすでに確保されており、全体残席には含まれません。
               </p>
             ) : (
               <p className="mt-3 text-sm leading-relaxed text-zinc-400">
-                下の残り席は全体の在庫です。あなたの枠は別カウントなので、残席が減っても確保は取り消されません。
+                下の残り席は全体の在庫です。あなたの確定枠は別カウントなので、残席が動いても取り消されません。
               </p>
             )}
+          </div>
+        )}
+
+        {isHeld && (
+          <div className="rounded-2xl border border-amber-400/40 bg-amber-500/10 p-5">
+            <p className="text-4xl font-black tracking-tight text-amber-200 md:text-5xl">仮確保中</p>
+            <p className="mt-2 text-sm text-zinc-200">枠は今このアカウントに入っています。まだ確定ではないので、期限までに「確定」してください。</p>
+            <p className="mt-3 text-xs font-medium tracking-wider text-amber-200/80">確定までの残り</p>
+            <p className="text-3xl font-black tabular-nums text-amber-100">{holdCountdown.isOver ? '期限切れ' : holdCountdown.label}</p>
+            <p className="mt-3 text-sm leading-relaxed text-zinc-300">{holdTtlCopy(ttlSeconds)}</p>
+          </div>
+        )}
+
+        {released && !hasSlot && releaseCopy && (
+          <div className="rounded-2xl border border-sky-500/30 bg-sky-500/10 p-5">
+            <p className="text-2xl font-black tracking-tight text-sky-100">{releaseCopy.title}</p>
+            <p className="mt-2 text-sm leading-relaxed text-zinc-200">{releaseCopy.body}</p>
+            <p className="mt-3 text-sm text-zinc-400">もう一度並ぶ場合は、待機列の後ろに入ります。抜けたままにはなりません。</p>
           </div>
         )}
 
@@ -210,7 +259,7 @@ export default function PerformanceDetailPage({ params }: Props) {
               <p className="mt-1 text-sm text-zinc-200">{waitCopy.body}</p>
               {(admission?.admitted_count ?? 0) > 0 && (
                 <p className="mt-2 text-sm text-zinc-400">
-                  他の人が枠を取れているのは先に並んだからです。あなたの待機は別です。
+                  他の人が枠を取れているのは先に並んだからです。あなたの待機は別です。空きが出れば先頭から通知します。
                 </p>
               )}
             </div>
@@ -236,17 +285,79 @@ export default function PerformanceDetailPage({ params }: Props) {
                 aria-busy={submitting}
                 className="rounded-lg bg-gradient-to-r from-violet-400 to-fuchsia-500 px-4 py-3 text-base font-extrabold text-zinc-950 shadow-lg shadow-fuchsia-500/30 transition active:scale-[.99] disabled:pointer-events-none disabled:opacity-50"
               >
-                {submitting ? '枠を確認中…' : soldOut ? 'キャンセル待ちに並ぶ' : '待機列に並ぶ'}
+                {submitting ? '枠を確認中…' : soldOut || released ? '待機列に並ぶ' : '待機列に並ぶ'}
               </button>
               {submitting && (
-                <p className="text-sm text-zinc-400">残席があれば、この場で枠が入ります。二重に並ぶことはありません。</p>
+                <p className="text-sm text-zinc-400">残席があれば、この場で仮確保が入ります。二重に並ぶことはありません。</p>
+              )}
+              {released && <p className="text-sm text-zinc-400">取り消しや期限切れのあとでも、希望すればもう一度並べます。</p>}
+            </>
+          )}
+
+          {isAuthenticated && isHeld && (
+            <>
+              <button
+                type="button"
+                onClick={() => {
+                  void handleConfirm();
+                }}
+                disabled={confirming || cancelling}
+                aria-busy={confirming}
+                className="rounded-lg bg-gradient-to-r from-emerald-400 to-teal-500 px-4 py-3 text-base font-extrabold text-zinc-950 shadow-lg shadow-emerald-500/30 transition active:scale-[.99] disabled:pointer-events-none disabled:opacity-50"
+              >
+                {confirming ? '確定しています…' : 'この枠を確定する'}
+              </button>
+              <p className="text-sm text-zinc-400">確定は決済ではありません。確定後は TTL の対象外になり、ここからキャンセルできません。</p>
+              {!cancelOpen ? (
+                <button
+                  type="button"
+                  onClick={() => setCancelOpen(true)}
+                  disabled={confirming || cancelling}
+                  className="rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-3 text-sm font-semibold text-zinc-200 hover:border-zinc-500"
+                >
+                  仮確保を取り消す
+                </button>
+              ) : (
+                <div className="rounded-2xl border border-rose-500/30 bg-rose-500/10 p-4">
+                  <p className="text-sm font-bold text-rose-100">この仮確保を手放しますか？</p>
+                  <p className="mt-1 text-sm text-zinc-200">
+                    席は待機列の先頭の人へ渡ります。抜けた扱いではなく、あなたが取り消したことが画面に残ります。確定済みにはできません。
+                  </p>
+                  <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+                    <button
+                      type="button"
+                      onClick={() => setCancelOpen(false)}
+                      disabled={cancelling}
+                      className="rounded-lg border border-zinc-700 px-4 py-2 text-sm font-semibold text-zinc-200"
+                    >
+                      戻る
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        void handleCancel().then(() => setCancelOpen(false));
+                      }}
+                      disabled={cancelling}
+                      aria-busy={cancelling}
+                      className="rounded-lg bg-rose-400 px-4 py-2 text-sm font-extrabold text-zinc-950"
+                    >
+                      {cancelling ? '取り消しています…' : '取り消して席を渡す'}
+                    </button>
+                  </div>
+                </div>
               )}
             </>
           )}
 
-          {isAuthenticated && isOpen && joinState !== 'idle' && (
+          {isAuthenticated && isConfirmed && (
             <p className="rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-3 text-sm text-zinc-400">
-              {hasSlot ? 'このアカウントの枠は確保済みです。同じ人がもう一度並んでも増えません。' : 'すでに待機列に参加しています。'}
+              確定済みです。同じ人がもう一度並んでも増えません。キャンセルも TTL もありません。
+            </p>
+          )}
+
+          {isAuthenticated && isOpen && joinState === 'waiting' && (
+            <p className="rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-3 text-sm text-zinc-400">
+              すでに待機列に参加しています。空きが出れば並んだ順に仮確保が入り、その場でお知らせします。
             </p>
           )}
 

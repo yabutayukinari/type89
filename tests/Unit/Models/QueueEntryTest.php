@@ -28,4 +28,16 @@ class QueueEntryTest extends TestCase
         $this->assertNotNull($linkedSlot);
         $this->assertTrue($linkedSlot->is($slot));
     }
+
+    public function test_cancelled_and_expired_entries_can_rejoin(): void
+    {
+        $cancelled = QueueEntry::factory()->cancelled()->create();
+        $expired = QueueEntry::factory()->expired()->create();
+        $waiting = QueueEntry::factory()->create();
+
+        $this->assertTrue($cancelled->canRejoin());
+        $this->assertTrue($expired->canRejoin());
+        $this->assertFalse($waiting->canRejoin());
+        $this->assertTrue($cancelled->slotEvents()->doesntExist());
+    }
 }
