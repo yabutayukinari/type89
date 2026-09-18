@@ -15,6 +15,7 @@ use App\Models\QueueEntry;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
+use RuntimeException;
 use Tests\TestCase;
 
 class PerformanceQueueTest extends TestCase
@@ -326,5 +327,28 @@ class PerformanceQueueTest extends TestCase
         $this->assertSame(0, $performance->seatInventory()->firstOrFail()->remaining_seats);
         Event::assertDispatched(SeatsUpdated::class);
         Event::assertDispatched(PurchaseSlotAssigned::class);
+    }
+
+    public function test_join_returns_the_slot_even_when_broadcasting_throws(): void
+    {
+        Event::listen(SeatsUpdated::class, static function (): never {
+            throw new RuntimeException('reverb down');
+        });
+        Event::listen(PurchaseSlotAssigned::class, static function (): never {
+            throw new RuntimeException('reverb down');
+        });
+        Event::listen(QueueAdmissionUpdated::class, static function (): never {
+            throw new RuntimeException('reverb down');
+        });
+
+        $performance = Performance::factory()->withCapacity(2)->create();
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->postJson("/api/performances/{$performance->id}/queue")
+            ->assertOk()
+            ->assertJsonPath('data.queue_entry.status', QueueEntryStatus::Admitted->value);
+
+        $this->assertSame(1, PurchaseSlot::query()->where('user_id', $user->id)->count());
     }
 }

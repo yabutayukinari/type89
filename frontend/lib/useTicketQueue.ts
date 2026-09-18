@@ -291,7 +291,7 @@ export const useTicketQueue = (
     return () => window.clearInterval(timer);
   }, [waitingWithoutSlot, isAuthenticated, refreshStatus]);
 
-  const handleJoin = async (): Promise<void> => {
+    const handleJoin = async (): Promise<void> => {
     if (joinLock.current) {
       return;
     }
@@ -302,6 +302,16 @@ export const useTicketQueue = (
       const next = await joinQueue(performanceId);
       commitAdmission(next);
     } catch (err: unknown) {
+      try {
+        const recovered = await fetchQueueStatus(performanceId);
+        if (recovered.queue_entry !== null) {
+          commitAdmission(recovered);
+          setError(null);
+          return;
+        }
+      } catch {
+        // fall through to the original join error
+      }
       joinLock.current = false;
       const message =
         err && typeof err === 'object' && 'response' in err
