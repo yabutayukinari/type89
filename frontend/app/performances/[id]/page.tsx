@@ -20,6 +20,12 @@ type Props = { params: Promise<{ id: string }> };
 
 const yen = (n: number): string => `¥${n.toLocaleString('ja-JP')}`;
 
+const joinSteps = [
+  { key: 'idle' as const, label: '未参加' },
+  { key: 'waiting' as const, label: '待機中' },
+  { key: 'secured' as const, label: '枠確保' },
+];
+
 export default function PerformanceDetailPage({ params }: Props) {
   const { id } = use(params);
   const performanceId = Number(id);
@@ -191,6 +197,8 @@ export default function PerformanceDetailPage({ params }: Props) {
   const soldOut = performance.remaining_seats === 0;
   const hasSlot = visibleAdmission?.purchase_slot !== null && visibleAdmission?.purchase_slot !== undefined;
   const inQueue = visibleAdmission?.queue_entry !== null && visibleAdmission?.queue_entry !== undefined;
+  const joinState: 'idle' | 'waiting' | 'secured' = hasSlot ? 'secured' : inQueue ? 'waiting' : 'idle';
+  const joinStateIndex = joinSteps.findIndex((step) => step.key === joinState);
 
   return (
     <main className="min-h-screen bg-zinc-950 text-zinc-100">
@@ -198,8 +206,8 @@ export default function PerformanceDetailPage({ params }: Props) {
         <div className="relative overflow-hidden rounded-2xl border border-zinc-800 bg-[radial-gradient(120%_90%_at_30%_0%,#1a1028,#0c0f14)] px-5 py-10">
           {isOpen && (
             <span className="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-full border border-red-500/40 bg-red-500/15 px-2.5 py-1 text-[11px] font-extrabold tracking-wide text-red-300">
-              <span className="animate-live-pulse h-2 w-2 rounded-full bg-red-500" />
-              {soldOut ? '満席' : 'SALE'}
+              {!soldOut && <span className="animate-live-pulse h-2 w-2 rounded-full bg-red-500" />}
+              {soldOut ? '満席' : '販売中'}
             </span>
           )}
           <p className="text-xs font-semibold tracking-[0.2em] text-violet-300/80">{performance.show.venue_label}</p>
@@ -207,10 +215,34 @@ export default function PerformanceDetailPage({ params }: Props) {
           <p className="mt-2 text-sm text-zinc-400">{new Date(performance.starts_at).toLocaleString('ja-JP')}</p>
         </div>
 
+        <ol className="grid grid-cols-3 gap-2" aria-label="参加の状態">
+          {joinSteps.map((step, i) => {
+            const isCurrent = i === joinStateIndex;
+            const isDone = i < joinStateIndex;
+            return (
+              <li
+                key={step.key}
+                aria-current={isCurrent ? 'step' : undefined}
+                className={
+                  isCurrent
+                    ? 'rounded-xl border border-fuchsia-400/40 bg-fuchsia-500/10 px-3 py-2 text-center text-sm font-bold text-fuchsia-200'
+                    : isDone
+                      ? 'rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2 text-center text-sm font-semibold text-zinc-300'
+                      : 'rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2 text-center text-sm text-zinc-500'
+                }
+              >
+                {step.label}
+              </li>
+            );
+          })}
+        </ol>
+
         <div>
-          <p className="text-xs font-medium tracking-wider text-zinc-500">残り席</p>
+          <p className="text-xs font-medium tracking-wider text-zinc-500">
+            {hasSlot ? '参考の全体残席' : '残り席'}
+          </p>
           <p className={`text-5xl font-black leading-none tracking-tight tabular-nums ${flash ? 'price-flash' : ''}`}>
-            {performance.remaining_seats}
+            <span aria-live="polite">{performance.remaining_seats}</span>
             <span className="ml-2 text-lg font-semibold text-zinc-500">/ {performance.capacity}</span>
           </p>
         </div>
@@ -233,19 +265,28 @@ export default function PerformanceDetailPage({ params }: Props) {
         <section className="flex flex-col gap-3">
           {hasSlot && (
             <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-4">
-              <p className="text-sm font-bold text-emerald-300">購入枠を確保しました</p>
+              <p className="text-sm font-bold text-emerald-300">枠確保</p>
               <p className="mt-1 text-sm text-zinc-300">
-                このセッションに割り当てられた枠は1つだけです。決済は行わないデモです。
+                購入枠を確保しました。このセッションに割り当てられた枠は1つだけです。決済は行わないデモです。
               </p>
-              <p className="mt-2 font-mono text-xs text-zinc-500">slot #{visibleAdmission?.purchase_slot?.id}</p>
+              <p className="mt-2 text-sm text-zinc-400">
+                デモはここまでです。別のブラウザで demo2@example.com にログインすると、同じ公演の残席が減る様子を確認できます。
+              </p>
             </div>
           )}
 
           {!hasSlot && inQueue && (
             <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4">
-              <p className="text-sm font-bold text-amber-300">待機列に並んでいます</p>
+              <p className="text-sm font-bold text-amber-300">
+                {soldOut ? 'キャンセル待ちで待機中' : '待機中'}
+              </p>
               <p className="mt-1 text-sm text-zinc-300">
-                あなたの順番は {visibleAdmission?.queue_entry?.position} 番目。空席があれば先着で枠が入ります。
+                {soldOut
+                  ? 'いまは満席です。枠が開けば、並んだ順に割り当てられます。'
+                  : '残席があれば枠はすぐに入ります。空席が開けば、その時点であなたに割り当てられます。'}
+              </p>
+              <p className="mt-1 text-sm text-zinc-400">
+                あなたの順番は {visibleAdmission?.queue_entry?.position} 番目です。
               </p>
             </div>
           )}

@@ -130,7 +130,9 @@ export default function Home() {
                 >
                   <p className="text-xs text-zinc-500">{p.show.venue_label}</p>
                   <div className="mt-1 flex items-center gap-2">
-                    <span className="animate-live-pulse h-2 w-2 shrink-0 rounded-full bg-red-500" />
+                    {p.remaining_seats > 0 && (
+                      <span className="animate-live-pulse h-2 w-2 shrink-0 rounded-full bg-red-500" />
+                    )}
                     <span className="truncate font-semibold">{p.show.title}</span>
                   </div>
                   <div className="mt-1 flex items-baseline justify-between gap-3">
@@ -216,8 +218,10 @@ function FeaturedCard({ performance, loading }: { performance: Performance | nul
       <div className="relative mb-4 flex aspect-[16/10] items-center justify-center overflow-hidden rounded-2xl border border-zinc-800 bg-[radial-gradient(120%_90%_at_30%_0%,#1a1028,#0c0f14)]">
         {performance?.sale_status === 'open' && (
           <span className="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-full border border-red-500/40 bg-red-500/15 px-2.5 py-1 text-[11px] font-extrabold tracking-wide text-red-300">
-            <span className="animate-live-pulse h-2 w-2 rounded-full bg-red-500" />
-            SALE
+            {performance.remaining_seats > 0 && (
+              <span className="animate-live-pulse h-2 w-2 rounded-full bg-red-500" />
+            )}
+            {performance.remaining_seats === 0 ? '満席' : '販売中'}
           </span>
         )}
         <span className="text-sm font-semibold tracking-[0.2em] text-violet-200/80">LIVE SHOW</span>

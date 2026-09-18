@@ -121,7 +121,7 @@ export function SiteHeader() {
           {/* モーフ移動するアクティブインジケータ */}
           <span
             aria-hidden="true"
-            className="absolute left-1.5 top-1.5 rounded-full bg-gradient-to-r from-orange-400 to-red-500 transition-transform duration-500 ease-[cubic-bezier(.34,1.56,.64,1)] motion-reduce:transition-none"
+            className="absolute left-1.5 top-1.5 rounded-full bg-gradient-to-r from-violet-400 to-fuchsia-500 transition-transform duration-500 ease-[cubic-bezier(.34,1.56,.64,1)] motion-reduce:transition-none"
             style={{
               width: ITEM,
               height: 46,
