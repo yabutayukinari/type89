@@ -18,6 +18,7 @@ use Illuminate\Support\Carbon;
  * @property int $seller_user_id
  * @property string $title
  * @property string $description
+ * @property string|null $image_url
  * @property int $starting_price
  * @property int $bid_increment
  * @property int $current_price
@@ -38,6 +39,7 @@ class Auction extends Model
         'seller_user_id',
         'title',
         'description',
+        'image_url',
         'starting_price',
         'bid_increment',
         'current_price',

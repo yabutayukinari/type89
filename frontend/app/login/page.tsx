@@ -12,5 +12,11 @@ export default function UserLoginPage() {
     router.push('/me');
   };
 
-  return <LoginForm title="User ログイン" onSubmit={handleSubmit} />;
+  return (
+    <LoginForm
+      title="User ログイン"
+      onSubmit={handleSubmit}
+      demoHint="デモ: test_user@example.com / test1111"
+    />
+  );
 }

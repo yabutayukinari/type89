@@ -30,6 +30,7 @@ class AuctionFactory extends Factory
             'seller_user_id' => User::factory(),
             'title' => $this->faker->words(3, true),
             'description' => $this->faker->paragraph(),
+            'image_url' => null,
             'starting_price' => $startingPrice,
             'bid_increment' => $this->faker->numberBetween(10, 500),
             'current_price' => $startingPrice,

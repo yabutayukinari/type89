@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500" role="img" aria-label="Fountain pen">
+  <defs>
+    <linearGradient id="pen-bg" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0%" stop-color="#3a2814"/>
+      <stop offset="100%" stop-color="#12100c"/>
+    </linearGradient>
+    <linearGradient id="pen-gold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#fff3c8"/>
+      <stop offset="100%" stop-color="#c9a227"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="500" fill="url(#pen-bg)"/>
+  <g transform="rotate(-24 400 260)">
+    <rect x="70" y="228" width="470" height="52" rx="16" fill="#1c1c22" stroke="#d6b25a" stroke-width="3"/>
+    <rect x="520" y="228" width="120" height="52" rx="12" fill="url(#pen-gold)"/>
+    <polygon points="640,254 760,236 760,272" fill="url(#pen-gold)"/>
+    <rect x="430" y="216" width="24" height="76" rx="4" fill="#e8c56a"/>
+  </g>
+  <text x="48" y="58" fill="#ffe9b0" font-family="Georgia, serif" font-size="28" letter-spacing="4">GINZA  18K  NIB</text>
+</svg>

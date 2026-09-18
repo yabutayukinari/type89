@@ -61,6 +61,8 @@ make reverb
 | 管理画面 | <http://localhost:3000/admin/login> |
 | ログイン（一般ユーザー） | `test_user@example.com` / `test1111` |
 
+`make setup` のシードで開催中オークション（まもなく終了の出品を含む）と入札履歴が入るので、トップページは空のままになりません。デモユーザーは出品者ではないため、ログインしたまま入札できます。デモデータをやり直すときは `./vendor/bin/sail artisan migrate:fresh --seed` です。
+
 `make front` / `make reverb` はそれぞれ起動しっぱなしになるため、別々のターミナルで実行してください。停止は各ターミナルで `Ctrl-C`。その他のコマンドは `make help` で確認できます。
 
 ## テスト

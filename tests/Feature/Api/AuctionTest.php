@@ -79,6 +79,18 @@ class AuctionTest extends TestCase
             ->assertJsonPath('data.status', 'ended');
     }
 
+    public function test_show_includes_image_url_when_present(): void
+    {
+        $auction = Auction::factory()->create([
+            'image_url' => '/images/auctions/leica-m3.svg',
+        ]);
+
+        $response = $this->getJson("/api/auctions/{$auction->id}");
+
+        $response->assertOk()
+            ->assertJsonPath('data.image_url', '/images/auctions/leica-m3.svg');
+    }
+
     public function test_show_includes_current_winner_when_present(): void
     {
         $winner = User::factory()->create(['name' => 'Winner Jane']);

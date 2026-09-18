@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500" role="img" aria-label="Daiginjo sake">
+  <defs>
+    <linearGradient id="s-bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#4a2c12"/>
+      <stop offset="100%" stop-color="#14100c"/>
+    </linearGradient>
+    <linearGradient id="s-glass" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#fff3c8"/>
+      <stop offset="100%" stop-color="#d4a017"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="500" fill="url(#s-bg)"/>
+  <rect x="340" y="46" width="120" height="58" rx="10" fill="#7a4a14"/>
+  <rect x="292" y="104" width="216" height="350" rx="56" fill="url(#s-glass)" stroke="#f3e0a0" stroke-width="4"/>
+  <rect x="322" y="150" width="156" height="168" rx="10" fill="#fffaf0"/>
+  <text x="400" y="228" text-anchor="middle" fill="#6a3b12" font-family="Georgia, serif" font-size="28">JYUSHIDAI</text>
+  <text x="400" y="272" text-anchor="middle" fill="#8a5a20" font-family="Georgia, serif" font-size="20">DAIGINJO</text>
+  <text x="48" y="58" fill="#ffe9b0" font-family="Georgia, serif" font-size="28" letter-spacing="5">JUNMAI  DAIGINJO</text>
+</svg>

@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Hash;
 class UserSeeder extends Seeder
 {
     /**
-     * Run the database seeds.
+     * Documented first-run login (a bidder, not the demo seller).
      */
     public function run(): void
     {

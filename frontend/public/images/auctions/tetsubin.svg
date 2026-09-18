@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500" role="img" aria-label="Nambu tetsubin">
+  <defs>
+    <linearGradient id="t-bg" x1="1" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#4a2818"/>
+      <stop offset="100%" stop-color="#14100c"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="500" fill="url(#t-bg)"/>
+  <ellipse cx="400" cy="310" rx="200" ry="145" fill="#2a2a30" stroke="#e0c56a" stroke-width="8"/>
+  <path d="M210 250C210 120 590 120 590 250" fill="none" stroke="#e8c56a" stroke-width="16" stroke-linecap="round"/>
+  <rect x="355" y="128" width="90" height="40" rx="10" fill="#e0c56a"/>
+  <g fill="#4a4a55">
+    <circle cx="320" cy="300" r="14"/>
+    <circle cx="400" cy="300" r="14"/>
+    <circle cx="480" cy="300" r="14"/>
+    <circle cx="360" cy="355" r="14"/>
+    <circle cx="440" cy="355" r="14"/>
+  </g>
+  <text x="48" y="58" fill="#ffe9b0" font-family="Georgia, serif" font-size="28" letter-spacing="4">NAMBU  TETSUBIN</text>
+</svg>

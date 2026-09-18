@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { AuctionCountdown } from '@/components/AuctionCountdown';
+import { AuctionVisual } from '@/components/AuctionVisual';
 import { Auction, fetchAuctions } from '@/lib/auctions';
 
 const yen = (n: number): string => `¥${n.toLocaleString('ja-JP')}`;
@@ -64,7 +65,12 @@ export default function AuctionsListPage() {
                   className="block rounded-xl border border-zinc-800 bg-zinc-900/60 p-4 transition hover:border-zinc-700 hover:bg-zinc-900"
                 >
                   <div className="flex items-start justify-between gap-4">
-                    <div className="min-w-0">
+                    <AuctionVisual
+                      title={a.title}
+                      imageUrl={a.image_url}
+                      className="h-16 w-24 shrink-0 rounded-lg border border-zinc-800"
+                    />
+                    <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2">
                         {isActive && (
                           <span className="animate-live-pulse h-2 w-2 shrink-0 rounded-full bg-red-500" />

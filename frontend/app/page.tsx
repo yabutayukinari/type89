@@ -3,16 +3,10 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { AuctionCountdown } from '@/components/AuctionCountdown';
+import { AuctionVisual } from '@/components/AuctionVisual';
 import { Auction, fetchAuctions } from '@/lib/auctions';
 
 const yen = (n: number): string => `¥${n.toLocaleString('ja-JP')}`;
-
-const CameraIcon = ({ className }: { className?: string }) => (
-  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" aria-hidden="true">
-    <path d="M3 8.5A1.5 1.5 0 0 1 4.5 7h2l1.2-1.8A1 1 0 0 1 8.5 4.8h7a1 1 0 0 1 .8.4L17.5 7h2A1.5 1.5 0 0 1 21 8.5v9A1.5 1.5 0 0 1 19.5 19h-15A1.5 1.5 0 0 1 3 17.5z" />
-    <circle cx="12" cy="12.5" r="3.4" />
-  </svg>
-);
 
 const features = [
   {
@@ -39,7 +33,7 @@ const features = [
 ];
 
 const steps = [
-  { n: '01', title: 'ログイン', body: 'メールアドレスでサインイン。デモは bidder@example.com / password ですぐ試せます。' },
+  { n: '01', title: 'ログイン', body: 'メールアドレスでサインイン。デモは test_user@example.com / test1111 ですぐ試せます。' },
   { n: '02', title: '入札する', body: '気になる出品を開いて、ワンタップで入札。価格と最低次回入札は自動で更新。' },
   { n: '03', title: '落札・通知', body: '終了時刻に最高額なら落札。結果はマイページとリアルタイム通知で受け取れます。' },
 ];
@@ -61,7 +55,10 @@ export default function Home() {
     };
   }, []);
 
-  const live = (auctions ?? []).filter((a) => a.status === 'active');
+  const live = (auctions ?? [])
+    .filter((a) => a.status === 'active')
+    .slice()
+    .sort((a, b) => Date.parse(a.ends_at) - Date.parse(b.ends_at));
   const featured = live[0] ?? null;
   const liveCount = live.length;
 
@@ -141,9 +138,11 @@ export default function Home() {
                   href={`/auctions/${a.id}`}
                   className="group block h-full rounded-2xl border border-zinc-800 bg-zinc-900/60 p-4 transition duration-200 hover:-translate-y-1 hover:border-zinc-700 hover:bg-zinc-900"
                 >
-                  <div className="mb-3 flex aspect-[16/9] items-center justify-center rounded-xl border border-zinc-800 bg-[radial-gradient(120%_90%_at_30%_0%,#23180a,#0c0f14)]">
-                    <CameraIcon className="h-9 w-9 text-amber-400/80" />
-                  </div>
+                  <AuctionVisual
+                    title={a.title}
+                    imageUrl={a.image_url}
+                    className="mb-3 aspect-[16/9] rounded-xl border border-zinc-800"
+                  />
                   <div className="flex items-center gap-2">
                     <span className="animate-live-pulse h-2 w-2 shrink-0 rounded-full bg-red-500" />
                     <span className="truncate font-semibold">{a.title}</span>
@@ -233,15 +232,18 @@ export default function Home() {
 function FeaturedCard({ auction, loading }: { auction: Auction | null; loading: boolean }) {
   return (
     <div className="w-full max-w-sm rounded-3xl border border-zinc-800 bg-zinc-900/70 p-4 shadow-2xl shadow-black/40">
-      <div className="relative mb-4 flex aspect-[16/10] items-center justify-center overflow-hidden rounded-2xl border border-zinc-800 bg-[radial-gradient(120%_90%_at_30%_0%,#23180a,#0c0f14)]">
+      <AuctionVisual
+        title={auction?.title ?? 'オークション'}
+        imageUrl={auction?.image_url}
+        className="relative mb-4 aspect-[16/10] rounded-2xl border border-zinc-800"
+      >
         {auction && (
-          <span className="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-full border border-red-500/40 bg-red-500/15 px-2.5 py-1 text-[11px] font-extrabold tracking-wide text-red-300">
+          <span className="absolute left-3 top-3 z-10 inline-flex items-center gap-1.5 rounded-full border border-red-500/40 bg-red-500/15 px-2.5 py-1 text-[11px] font-extrabold tracking-wide text-red-300">
             <span className="animate-live-pulse h-2 w-2 rounded-full bg-red-500" />
             LIVE
           </span>
         )}
-        <CameraIcon className="h-14 w-14 text-amber-400/90" />
-      </div>
+      </AuctionVisual>
       {loading ? (
         <div className="space-y-3">
           <div className="h-4 w-2/3 rounded bg-zinc-800" />

@@ -5,9 +5,10 @@ import { FormEvent, useState } from 'react';
 type Props = {
   title: string;
   onSubmit: (email: string, password: string) => Promise<void>;
+  demoHint?: string;
 };
 
-export default function LoginForm({ title, onSubmit }: Props) {
+export default function LoginForm({ title, onSubmit, demoHint }: Props) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -38,6 +39,7 @@ export default function LoginForm({ title, onSubmit }: Props) {
       className="mx-auto mt-16 flex w-full max-w-md flex-col gap-4 rounded-lg border border-zinc-300 bg-white p-8 shadow-sm dark:border-zinc-700 dark:bg-zinc-900"
     >
       <h1 className="text-2xl font-semibold">{title}</h1>
+      {demoHint && <p className="text-sm text-zinc-500">{demoHint}</p>}
 
       <label className="flex flex-col gap-1 text-sm">
         Email
