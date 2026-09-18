@@ -16,7 +16,9 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Schema;
 use Tests\TestCase;
 
 class ExpireHeldPurchaseSlotsTest extends TestCase
@@ -87,6 +89,23 @@ class ExpireHeldPurchaseSlotsTest extends TestCase
 
         $this->assertSame(0, Artisan::call('tickets:expire-holds'));
         $this->assertStringContainsString('期限切れにした仮確保: 0 件', Artisan::output());
+    }
+
+    public function test_command_skips_expired_holds_when_the_performance_no_longer_exists(): void
+    {
+        $performance = Performance::factory()->withCapacity(1)->create();
+        $user = User::factory()->create();
+        $this->actingAs($user)->postJson("/api/performances/{$performance->id}/queue")->assertOk();
+
+        Carbon::setTestNow(Carbon::now()->addMinutes(5));
+
+        Schema::disableForeignKeyConstraints();
+        DB::table('performances')->where('id', $performance->id)->delete();
+        Schema::enableForeignKeyConstraints();
+
+        $this->assertSame(0, Artisan::call('tickets:expire-holds'));
+        $this->assertStringContainsString('期限切れにした仮確保: 0 件', Artisan::output());
+        $this->assertDatabaseHas('purchase_slots', ['user_id' => $user->id]);
     }
 
     public function test_expired_holder_status_explains_ttl_not_a_silent_drop(): void

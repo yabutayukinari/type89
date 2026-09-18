@@ -152,6 +152,44 @@ class PerformanceQueueLifecycleTest extends TestCase
         $this->assertSame(1, SlotEvent::query()->where('type', SlotEventType::Confirmed->value)->count());
     }
 
+    public function test_confirm_releases_an_expired_hold_and_fifo_admits_the_waiter(): void
+    {
+        $performance = Performance::factory()->withCapacity(2)->create();
+        $confirmer = User::factory()->create();
+        $expiring = User::factory()->create();
+        $waiter = User::factory()->create();
+
+        $this->actingAs($confirmer)->postJson("/api/performances/{$performance->id}/queue")->assertOk();
+        $this->actingAs($expiring)->postJson("/api/performances/{$performance->id}/queue")->assertOk();
+        $this->actingAs($waiter)
+            ->postJson("/api/performances/{$performance->id}/queue")
+            ->assertOk()
+            ->assertJsonPath('data.purchase_slot', null);
+
+        PurchaseSlot::query()->where('user_id', $expiring->id)->update([
+            'expires_at' => Carbon::now()->subMinute(),
+        ]);
+
+        $this->actingAs($confirmer)
+            ->postJson("/api/performances/{$performance->id}/queue/confirm")
+            ->assertOk()
+            ->assertJsonPath('data.purchase_slot.status', 'confirmed');
+
+        $this->assertDatabaseMissing('purchase_slots', ['user_id' => $expiring->id]);
+        $this->assertDatabaseHas('purchase_slots', [
+            'user_id' => $waiter->id,
+            'performance_id' => $performance->id,
+        ]);
+        $this->assertSame(
+            QueueEntryStatus::Expired,
+            QueueEntry::query()->where('user_id', $expiring->id)->first()?->status,
+        );
+        $this->assertSame(
+            QueueEntryStatus::Admitted,
+            QueueEntry::query()->where('user_id', $waiter->id)->first()?->status,
+        );
+    }
+
     public function test_confirm_without_a_hold_is_rejected(): void
     {
         $performance = Performance::factory()->withCapacity(1)->create();
