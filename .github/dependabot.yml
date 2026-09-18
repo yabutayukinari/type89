@@ -20,7 +20,7 @@ updates:
     # 公開直後の悪意あるバージョンを掴まないよう、レピュテーション猶予を入れる
     cooldown:
       default-days: 7
-      semver-major-days: 30
+      semver-major-days: 7
       semver-minor-days: 7
       semver-patch-days: 7
 
@@ -43,7 +43,7 @@ updates:
           - patch
     cooldown:
       default-days: 7
-      semver-major-days: 30
+      semver-major-days: 7
       semver-minor-days: 7
       semver-patch-days: 7
 
@@ -65,6 +65,6 @@ updates:
           - patch
     cooldown:
       default-days: 7
-      semver-major-days: 30
+      semver-major-days: 7
       semver-minor-days: 7
       semver-patch-days: 7
