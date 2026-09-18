@@ -33,7 +33,7 @@ class PerformanceFactory extends Factory
 
     public function configure(): static
     {
-        return $this->afterCreating(function (Performance $performance): void {
+        return $this->afterCreating(static function (Performance $performance): void {
             if ($performance->seatInventory()->exists()) {
                 return;
             }
@@ -65,7 +65,7 @@ class PerformanceFactory extends Factory
     {
         $remaining = $remainingSeats ?? $capacity;
 
-        return $this->afterCreating(function (Performance $performance) use ($capacity, $remaining): void {
+        return $this->afterCreating(static function (Performance $performance) use ($capacity, $remaining): void {
             $performance->seatInventory()->updateOrCreate(
                 ['performance_id' => $performance->id],
                 [

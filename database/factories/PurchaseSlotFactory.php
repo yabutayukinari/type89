@@ -30,7 +30,7 @@ class PurchaseSlotFactory extends Factory
 
     public function configure(): static
     {
-        return $this->afterMaking(function (PurchaseSlot $slot): void {
+        return $this->afterMaking(static function (PurchaseSlot $slot): void {
             if ($slot->queue_entry_id !== null) {
                 return;
             }

@@ -45,7 +45,6 @@ export default function PerformanceDetailPage({ params }: Props) {
 
   useEffect(() => {
     if (!isAuthenticated) {
-      setAdmission(null);
       return;
     }
     let cancelled = false;
@@ -121,7 +120,9 @@ export default function PerformanceDetailPage({ params }: Props) {
     };
   }, [auth, performanceId]);
 
-  const waitingWithoutSlot = admission?.queue_entry !== null && admission?.purchase_slot === null;
+  const visibleAdmission = isAuthenticated ? admission : null;
+  const waitingWithoutSlot =
+    visibleAdmission?.queue_entry !== null && visibleAdmission?.purchase_slot === null;
   useEffect(() => {
     if (!waitingWithoutSlot || !isAuthenticated) {
       return;
@@ -188,8 +189,8 @@ export default function PerformanceDetailPage({ params }: Props) {
         : performance.sale_status;
   const isOpen = saleStatus === 'open';
   const soldOut = performance.remaining_seats === 0;
-  const hasSlot = admission?.purchase_slot !== null && admission?.purchase_slot !== undefined;
-  const inQueue = admission?.queue_entry !== null && admission?.queue_entry !== undefined;
+  const hasSlot = visibleAdmission?.purchase_slot !== null && visibleAdmission?.purchase_slot !== undefined;
+  const inQueue = visibleAdmission?.queue_entry !== null && visibleAdmission?.queue_entry !== undefined;
 
   return (
     <main className="min-h-screen bg-zinc-950 text-zinc-100">
@@ -236,7 +237,7 @@ export default function PerformanceDetailPage({ params }: Props) {
               <p className="mt-1 text-sm text-zinc-300">
                 このセッションに割り当てられた枠は1つだけです。決済は行わないデモです。
               </p>
-              <p className="mt-2 font-mono text-xs text-zinc-500">slot #{admission?.purchase_slot?.id}</p>
+              <p className="mt-2 font-mono text-xs text-zinc-500">slot #{visibleAdmission?.purchase_slot?.id}</p>
             </div>
           )}
 
@@ -244,7 +245,7 @@ export default function PerformanceDetailPage({ params }: Props) {
             <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4">
               <p className="text-sm font-bold text-amber-300">待機列に並んでいます</p>
               <p className="mt-1 text-sm text-zinc-300">
-                あなたの順番は {admission?.queue_entry?.position} 番目。空席があれば先着で枠が入ります。
+                あなたの順番は {visibleAdmission?.queue_entry?.position} 番目。空席があれば先着で枠が入ります。
               </p>
             </div>
           )}
