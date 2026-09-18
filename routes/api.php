@@ -8,11 +8,20 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BidController;
 use App\Http\Controllers\Api\BroadcastTestController;
 use App\Http\Controllers\Api\NotificationController;
+use App\Http\Controllers\Api\PerformanceController;
+use App\Http\Controllers\Api\PerformanceQueueController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/health', static fn () => response()->json(['status' => 'ok']))->name('api.health');
 
 Route::post('/broadcast-test', BroadcastTestController::class)->name('api.broadcast-test');
+
+Route::get('/performances', [PerformanceController::class, 'index'])->name('api.performances.index');
+Route::get('/performances/{performance}', [PerformanceController::class, 'show'])->name('api.performances.show');
+Route::middleware('auth:web')->group(static function (): void {
+    Route::get('/performances/{performance}/queue', [PerformanceQueueController::class, 'show'])->name('api.performances.queue.show');
+    Route::post('/performances/{performance}/queue', [PerformanceQueueController::class, 'store'])->name('api.performances.queue.store');
+});
 
 Route::get('/auctions', [AuctionController::class, 'index'])->name('api.auctions.index');
 Route::get('/auctions/{auction}', [AuctionController::class, 'show'])->name('api.auctions.show');

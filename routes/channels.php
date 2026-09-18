@@ -9,6 +9,9 @@ Broadcast::channel('public.ping', static fn () => true);
 
 Broadcast::channel('user.{userId}', static fn (User $user, int $userId): bool => $user->id === $userId);
 
+// 公演の残席は観戦自体は誰でも可能 (パブリックチャネル)。待機列への参加は API 側で auth。
+Broadcast::channel('performance.{performanceId}', static fn () => true);
+
 // オークションは観戦自体は誰でも可能 (パブリックチャネル)。入札は API 側で auth + 認可。
 Broadcast::channel('auction.{auctionId}', static fn () => true);
 

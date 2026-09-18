@@ -77,6 +77,8 @@ setup: ## One-shot bootstrap (idempotent)
 	@echo "  App:        http://localhost:3000"
 	@echo "  Admin:      http://localhost:3000/admin/login"
 	@echo "  Login user: test_user@example.com / test1111"
+	@echo "  Alt users:  demo2@example.com / test1111 , demo3@example.com / test1111"
+	@echo "  Demo sale:  http://localhost:3000/performances"
 	@echo ""
 
 up: ## Start Sail containers

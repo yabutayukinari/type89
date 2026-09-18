@@ -47,6 +47,13 @@ class ChannelAuthTest extends TestCase
         $this->assertTrue($callback(null, 42));
     }
 
+    public function test_performance_channel_authorizes_anyone(): void
+    {
+        $callback = $this->registeredChannels()['performance.{performanceId}'];
+
+        $this->assertTrue($callback(null, 42));
+    }
+
     public function test_auction_presence_channel_returns_member_info_for_authenticated_user(): void
     {
         $user = User::factory()->create(['name' => 'Alice']);

@@ -7,7 +7,9 @@
 [![Laravel](https://img.shields.io/badge/laravel-13-ff2d20)](https://laravel.com/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
-ユーザー管理・オークションを題材にした、Laravel API + Next.js SPA の個人プラクティス用リポジトリです。バックエンドは Laravel Sail で完結するため、ローカルに PHP / Composer は不要です（フロントエンドの `frontend/` のみ Node が必要）。
+ユーザー管理・フラッシュ需要のチケット販売を題材にした、Laravel API + Next.js SPA の個人プラクティス用リポジトリです。バックエンドは Laravel Sail で完結するため、ローカルに PHP / Composer は不要です（フロントエンドの `frontend/` のみ Node が必要）。
+
+購入者向けデモの流れは **販売開始 → 待機列 → 公平な購入枠（1人1枠）→ 残席のリアルタイム更新（Reverb）** です。オークション API / 画面は残していますが、今のプロダクトデモの主軸ではありません。
 
 ## 技術スタック
 
@@ -47,7 +49,7 @@ Next.js の開発サーバが立ち上がります（起動したままにしま
 
 ### 3. リアルタイム機能を使う場合 — さらに別ターミナル
 
-入札・落札通知などの WebSocket（Reverb）を動かすときだけ起動します。
+入札・落札通知などの WebSocket（Reverb）を動かすときだけ起動します。チケット販売デモの残席ライブ更新にも必要です。
 
 ```bash
 make reverb
@@ -58,8 +60,12 @@ make reverb
 | 項目 | URL / ログイン情報 |
 | --- | --- |
 | アプリ（ユーザー画面） | <http://localhost:3000> |
+| デモ公演（チケット販売） | <http://localhost:3000/performances> |
 | 管理画面 | <http://localhost:3000/admin/login> |
 | ログイン（一般ユーザー） | `test_user@example.com` / `test1111` |
+| 別ブラウザ用 | `demo2@example.com` / `test1111`（`demo3@example.com` も可） |
+
+デモ公演 **MIDNIGHT CIRCUIT VOL.12** は席数 8 のクラブナイトです。ログインして「待機列に並ぶ」と、空席があれば購入枠が 1 つ入り、残席が減ります。同じアカウントで何度並んでも枠は増えません。別ブラウザ（別ユーザー）で同じ公演を開くと、残席が Reverb 経由でライブに減るのを確認できます。決済・座席図・会場選択はありません。
 
 `make setup` のシードで開催中オークション（まもなく終了の出品を含む）と入札履歴が入るので、トップページは空のままになりません。デモユーザーは出品者ではないため、ログインしたまま入札できます。デモデータをやり直すときは `./vendor/bin/sail artisan migrate:fresh --seed` です。
 
