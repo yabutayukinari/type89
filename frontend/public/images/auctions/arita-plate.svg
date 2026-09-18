@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500" role="img" aria-label="Arita porcelain">
+  <defs>
+    <radialGradient id="p-bg" cx="50%" cy="40%" r="70%">
+      <stop offset="0%" stop-color="#2a4a72"/>
+      <stop offset="100%" stop-color="#10141c"/>
+    </radialGradient>
+    <radialGradient id="p-plate" cx="50%" cy="45%" r="50%">
+      <stop offset="0%" stop-color="#fffdf6"/>
+      <stop offset="100%" stop-color="#e6d9c0"/>
+    </radialGradient>
+  </defs>
+  <rect width="800" height="500" fill="url(#p-bg)"/>
+  <ellipse cx="400" cy="275" rx="280" ry="175" fill="url(#p-plate)" stroke="#1d4f86" stroke-width="14"/>
+  <ellipse cx="400" cy="275" rx="188" ry="118" fill="none" stroke="#2b6ea8" stroke-width="6"/>
+  <path d="M400 185c28 28 62 54 0 112c-62-58-28-84 0-112z" fill="#1d4f86"/>
+  <circle cx="330" cy="245" r="16" fill="#1d4f86"/>
+  <circle cx="470" cy="245" r="16" fill="#1d4f86"/>
+  <circle cx="300" cy="320" r="12" fill="#2b6ea8"/>
+  <circle cx="500" cy="320" r="12" fill="#2b6ea8"/>
+  <text x="48" y="58" fill="#d6e7ff" font-family="Georgia, serif" font-size="28" letter-spacing="6">ARITA  PORCELAIN</text>
+</svg>

@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500" role="img" aria-label="Hokusai Great Wave">
+  <defs>
+    <linearGradient id="h-bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1c4a78"/>
+      <stop offset="100%" stop-color="#0d1522"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="500" fill="url(#h-bg)"/>
+  <path d="M0 300C150 250 210 70 400 160C540 220 590 50 800 150L800 500H0Z" fill="#2d6eab"/>
+  <path d="M0 350C180 280 280 190 430 250C590 320 650 170 800 230V500H0Z" fill="#eef3f8"/>
+  <path d="M40 250C140 120 230 80 290 160C210 190 120 230 40 250Z" fill="#ffffff"/>
+  <path d="M560 150C660 60 750 90 800 180C730 175 630 180 560 150Z" fill="#ffffff"/>
+  <polygon points="500,270 555,355 440,348" fill="#e0b45a"/>
+  <text x="48" y="58" fill="#d6e7ff" font-family="Georgia, serif" font-size="28" letter-spacing="4">HOKUSAI  GREAT WAVE</text>
+</svg>

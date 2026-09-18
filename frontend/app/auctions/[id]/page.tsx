@@ -1,6 +1,7 @@
 'use client';
 
 import { use, useEffect, useRef, useState } from 'react';
+import { AuctionVisual } from '@/components/AuctionVisual';
 import {
   Auction,
   Bid,
@@ -17,20 +18,6 @@ import { useViewerCount } from '@/lib/useViewerCount';
 type Props = { params: Promise<{ id: string }> };
 
 const yen = (n: number): string => `¥${n.toLocaleString('ja-JP')}`;
-
-const CameraIcon = ({ className }: { className?: string }) => (
-  <svg
-    className={className}
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="1.4"
-    aria-hidden="true"
-  >
-    <path d="M3 8.5A1.5 1.5 0 0 1 4.5 7h2l1.2-1.8A1 1 0 0 1 8.5 4.8h7a1 1 0 0 1 .8.4L17.5 7h2A1.5 1.5 0 0 1 21 8.5v9A1.5 1.5 0 0 1 19.5 19h-15A1.5 1.5 0 0 1 3 17.5z" />
-    <circle cx="12" cy="12.5" r="3.4" />
-  </svg>
-);
 
 export default function AuctionDetailPage({ params }: Props) {
   const { id } = use(params);
@@ -137,21 +124,23 @@ export default function AuctionDetailPage({ params }: Props) {
   return (
     <main className="min-h-screen bg-zinc-950 text-zinc-100">
       <div className="mx-auto flex w-full max-w-2xl flex-col gap-5 p-6 pt-10">
-        {/* 商品ビジュアル (画像未対応のためプレースホルダ) */}
-        <div className="relative flex aspect-[16/10] items-center justify-center overflow-hidden rounded-2xl border border-zinc-800 bg-[radial-gradient(120%_90%_at_30%_0%,#23180a,#0c0f14)]">
+        <AuctionVisual
+          title={auction.title}
+          imageUrl={auction.image_url}
+          className="aspect-[16/10] rounded-2xl border border-zinc-800"
+        >
           {isActive && (
-            <span className="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-full border border-red-500/40 bg-red-500/15 px-2.5 py-1 text-[11px] font-extrabold tracking-wide text-red-300">
+            <span className="absolute left-3 top-3 z-10 inline-flex items-center gap-1.5 rounded-full border border-red-500/40 bg-red-500/15 px-2.5 py-1 text-[11px] font-extrabold tracking-wide text-red-300">
               <span className="animate-live-pulse h-2 w-2 rounded-full bg-red-500" />
               LIVE
             </span>
           )}
           {viewerCount !== null && (
-            <span className="absolute right-3 top-3 rounded-full bg-black/40 px-2.5 py-1 text-[11px] font-semibold text-zinc-200">
+            <span className="absolute right-3 top-3 z-10 rounded-full bg-black/40 px-2.5 py-1 text-[11px] font-semibold text-zinc-200">
               👁 {viewerCount}人が観戦中
             </span>
           )}
-          <CameraIcon className="h-16 w-16 text-amber-400/90" />
-        </div>
+        </AuctionVisual>
 
         {/* タイトル */}
         <div>
