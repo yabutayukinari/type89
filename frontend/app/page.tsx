@@ -23,7 +23,7 @@ const features = [
   },
   {
     title: '残席がライブで減る',
-    body: '誰かが枠を取ると、残席が Reverb 経由でその場で更新されます。ページをリロードする必要はありません。',
+    body: '誰かが枠を取ると、残席がその場でリアルタイムで減ります。ページをリロードする必要はありません。',
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M13 2 4 14h7l-1 8 9-12h-7z" /></svg>
     ),
@@ -99,7 +99,7 @@ export default function Home() {
                 '開催状況を読み込み中…'
               ) : liveCount > 0 ? (
                 <>
-                  <span className="font-bold text-emerald-400">{liveCount}件</span> が販売中 ・ 残席は Reverb でライブ更新
+                  <span className="font-bold text-emerald-400">{liveCount}件</span> が販売中 ・ 残席はリアルタイムで減る
                 </>
               ) : (
                 'まもなく新しい公演の販売が始まります'

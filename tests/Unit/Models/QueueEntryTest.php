@@ -24,6 +24,8 @@ class QueueEntryTest extends TestCase
 
         $this->assertTrue($entry->performance->is($slot->performance));
         $this->assertTrue($entry->user->is($slot->user));
-        $this->assertTrue($entry->purchaseSlot->is($slot));
+        $linkedSlot = $entry->purchaseSlot;
+        $this->assertNotNull($linkedSlot);
+        $this->assertTrue($linkedSlot->is($slot));
     }
 }

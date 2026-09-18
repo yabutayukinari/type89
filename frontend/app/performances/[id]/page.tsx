@@ -237,15 +237,42 @@ export default function PerformanceDetailPage({ params }: Props) {
           })}
         </ol>
 
-        <div>
-          <p className="text-xs font-medium tracking-wider text-zinc-500">
-            {hasSlot ? '参考の全体残席' : '残り席'}
-          </p>
-          <p className={`text-5xl font-black leading-none tracking-tight tabular-nums ${flash ? 'price-flash' : ''}`}>
-            <span aria-live="polite">{performance.remaining_seats}</span>
-            <span className="ml-2 text-lg font-semibold text-zinc-500">/ {performance.capacity}</span>
-          </p>
-        </div>
+        {hasSlot && (
+          <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-5">
+            <p className="text-4xl font-black tracking-tight text-emerald-300 md:text-5xl">枠取れた！</p>
+            <p className="mt-2 text-sm text-zinc-200">このセッションの購入枠は1つだけです。決済は行いません。</p>
+            <p className="mt-3 text-xs leading-relaxed text-zinc-500">
+              デモはここまでです。別のブラウザで demo2@example.com にログインすると、同じ公演の残席が減る様子を確認できます。
+            </p>
+          </div>
+        )}
+
+        {joinState === 'waiting' ? (
+          <div>
+            <p className="text-xs font-medium tracking-wider text-zinc-500">自分の番</p>
+            <p className="text-5xl font-black leading-none tracking-tight tabular-nums">
+              {visibleAdmission?.queue_entry?.position}
+              <span className="ml-2 text-lg font-semibold text-zinc-400">番目</span>
+            </p>
+            <p className="mt-3 text-sm text-zinc-500">
+              全体の残席{' '}
+              <span aria-live="polite" className={`font-semibold tabular-nums ${flash ? 'price-flash' : ''}`}>
+                {performance.remaining_seats}
+              </span>
+              <span className="text-zinc-600"> / {performance.capacity}</span>
+            </p>
+          </div>
+        ) : (
+          <div>
+            <p className="text-xs font-medium tracking-wider text-zinc-500">
+              {hasSlot ? '参考の全体残席' : '残り席'}
+            </p>
+            <p className={`text-5xl font-black leading-none tracking-tight tabular-nums ${flash ? 'price-flash' : ''}`}>
+              <span aria-live="polite">{performance.remaining_seats}</span>
+              <span className="ml-2 text-lg font-semibold text-zinc-500">/ {performance.capacity}</span>
+            </p>
+          </div>
+        )}
 
         <div className="grid grid-cols-2 gap-3">
           <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3">
@@ -263,30 +290,18 @@ export default function PerformanceDetailPage({ params }: Props) {
         </div>
 
         <section className="flex flex-col gap-3">
-          {hasSlot && (
-            <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-4">
-              <p className="text-sm font-bold text-emerald-300">枠確保</p>
-              <p className="mt-1 text-sm text-zinc-300">
-                購入枠を確保しました。このセッションに割り当てられた枠は1つだけです。決済は行わないデモです。
-              </p>
-              <p className="mt-2 text-sm text-zinc-400">
-                デモはここまでです。別のブラウザで demo2@example.com にログインすると、同じ公演の残席が減る様子を確認できます。
-              </p>
-            </div>
-          )}
-
           {!hasSlot && inQueue && (
             <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4">
               <p className="text-sm font-bold text-amber-300">
                 {soldOut ? 'キャンセル待ちで待機中' : '待機中'}
               </p>
-              <p className="mt-1 text-sm text-zinc-300">
+              <p className="mt-1 text-sm text-zinc-200">
+                自分の番は {visibleAdmission?.queue_entry?.position} 番目です。
+              </p>
+              <p className="mt-1 text-sm text-zinc-400">
                 {soldOut
                   ? 'いまは満席です。枠が開けば、並んだ順に割り当てられます。'
                   : '残席があれば枠はすぐに入ります。空席が開けば、その時点であなたに割り当てられます。'}
-              </p>
-              <p className="mt-1 text-sm text-zinc-400">
-                あなたの順番は {visibleAdmission?.queue_entry?.position} 番目です。
               </p>
             </div>
           )}
@@ -301,14 +316,21 @@ export default function PerformanceDetailPage({ params }: Props) {
           )}
 
           {isAuthenticated && isOpen && !inQueue && (
-            <button
-              type="button"
-              onClick={handleJoin}
-              disabled={submitting}
-              className="rounded-lg bg-gradient-to-r from-violet-400 to-fuchsia-500 px-4 py-3 text-base font-extrabold text-zinc-950 shadow-lg shadow-fuchsia-500/30 transition active:scale-[.99] disabled:opacity-50"
-            >
-              {submitting ? '処理中…' : soldOut ? 'キャンセル待ちに並ぶ' : '待機列に並ぶ'}
-            </button>
+            <>
+              <button
+                type="button"
+                onClick={handleJoin}
+                disabled={submitting}
+                className="rounded-lg bg-gradient-to-r from-violet-400 to-fuchsia-500 px-4 py-3 text-base font-extrabold text-zinc-950 shadow-lg shadow-fuchsia-500/30 transition active:scale-[.99] disabled:opacity-50"
+              >
+                {submitting ? '枠を確認中…' : soldOut ? 'キャンセル待ちに並ぶ' : '待機列に並ぶ'}
+              </button>
+              {submitting && (
+                <p className="text-sm text-zinc-400">
+                  残席があれば、この場で枠が入ります。失敗ではありません。
+                </p>
+              )}
+            </>
           )}
 
           {saleStatus === 'upcoming' && (
