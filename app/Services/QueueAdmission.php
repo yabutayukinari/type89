@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace App\Services;
 
@@ -9,13 +11,12 @@ use App\Models\QueueEntry;
 final readonly class QueueAdmission
 {
     /**
-     * @param list<PurchaseSlot> $newlyAssignedSlots
+     * @param  list<PurchaseSlot>  $newlyAssignedSlots
      */
     public function __construct(
         public Performance $performance,
         public ?QueueEntry $queueEntry,
         public ?PurchaseSlot $purchaseSlot,
         public array $newlyAssignedSlots = [],
-    ) {
-    }
+    ) {}
 }

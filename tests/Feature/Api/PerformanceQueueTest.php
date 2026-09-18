@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Tests\Feature\Api;
 
@@ -25,7 +27,7 @@ class PerformanceQueueTest extends TestCase
         $this->withHeader('Origin', 'http://localhost:3000');
     }
 
-    public function testJoinRequiresAuthentication(): void
+    public function test_join_requires_authentication(): void
     {
         $performance = Performance::factory()->create();
 
@@ -33,7 +35,7 @@ class PerformanceQueueTest extends TestCase
             ->assertStatus(401);
     }
 
-    public function testCannotJoinBeforeSaleOpens(): void
+    public function test_cannot_join_before_sale_opens(): void
     {
         $performance = Performance::factory()->upcoming()->create();
         $user = User::factory()->create();
@@ -44,7 +46,7 @@ class PerformanceQueueTest extends TestCase
             ->assertJsonValidationErrors(['queue']);
     }
 
-    public function testCannotJoinAfterSaleCloses(): void
+    public function test_cannot_join_after_sale_closes(): void
     {
         $performance = Performance::factory()->closed()->create();
         $user = User::factory()->create();
@@ -55,7 +57,7 @@ class PerformanceQueueTest extends TestCase
             ->assertJsonValidationErrors(['queue']);
     }
 
-    public function testJoinAssignsAPurchaseSlotAndDecrementsRemainingSeats(): void
+    public function test_join_assigns_a_purchase_slot_and_decrements_remaining_seats(): void
     {
         Event::fake();
 
@@ -82,7 +84,7 @@ class PerformanceQueueTest extends TestCase
         Event::assertDispatched(PurchaseSlotAssigned::class);
     }
 
-    public function testJoinIsIdempotentAndDoesNotDoubleAllocateForTheSameUser(): void
+    public function test_join_is_idempotent_and_does_not_double_allocate_for_the_same_user(): void
     {
         $performance = Performance::factory()->withCapacity(5)->create();
         $user = User::factory()->create();
@@ -104,7 +106,7 @@ class PerformanceQueueTest extends TestCase
         $this->assertSame(4, $performance->seatInventory()->firstOrFail()->remaining_seats);
     }
 
-    public function testFifoAssignmentDoesNotOverAllocateWhenDemandExceedsSeats(): void
+    public function test_fifo_assignment_does_not_over_allocate_when_demand_exceeds_seats(): void
     {
         $performance = Performance::factory()->withCapacity(2)->create();
         $first = User::factory()->create();
@@ -138,7 +140,7 @@ class PerformanceQueueTest extends TestCase
         $this->assertSame(0, $duplicates);
     }
 
-    public function testSoldOutJoinDoesNotBroadcastSeatChanges(): void
+    public function test_sold_out_join_does_not_broadcast_seat_changes(): void
     {
         Event::fake();
 
@@ -156,7 +158,7 @@ class PerformanceQueueTest extends TestCase
         Event::assertNotDispatched(PurchaseSlotAssigned::class);
     }
 
-    public function testQueueStatusRequiresAuthentication(): void
+    public function test_queue_status_requires_authentication(): void
     {
         $performance = Performance::factory()->create();
 
@@ -164,7 +166,7 @@ class PerformanceQueueTest extends TestCase
             ->assertStatus(401);
     }
 
-    public function testQueueStatusReturnsNullsWhenUserHasNotJoined(): void
+    public function test_queue_status_returns_nulls_when_user_has_not_joined(): void
     {
         $performance = Performance::factory()->create();
         $user = User::factory()->create();

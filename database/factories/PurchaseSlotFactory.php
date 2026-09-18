@@ -1,8 +1,9 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Database\Factories;
 
-use App\Models\Performance;
 use App\Models\PurchaseSlot;
 use App\Models\QueueEntry;
 use Illuminate\Database\Eloquent\Factories\Factory;

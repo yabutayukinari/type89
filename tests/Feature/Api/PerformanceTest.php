@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Tests\Feature\Api;
 
@@ -18,7 +20,7 @@ class PerformanceTest extends TestCase
         $this->withHeader('Origin', 'http://localhost:3000');
     }
 
-    public function testIndexReturnsPerformances(): void
+    public function test_index_returns_performances(): void
     {
         Performance::factory()->count(2)->create();
 
@@ -28,7 +30,7 @@ class PerformanceTest extends TestCase
             ->assertJsonCount(2, 'data');
     }
 
-    public function testShowReturnsPerformanceWithInventory(): void
+    public function test_show_returns_performance_with_inventory(): void
     {
         $performance = Performance::factory()->withCapacity(8)->create([
             'price' => 6500,
@@ -46,7 +48,7 @@ class PerformanceTest extends TestCase
             ->assertJsonPath('data.show.venue_label', $performance->show->venue_label);
     }
 
-    public function testShowReturnsUpcomingStatusBeforeSaleOpens(): void
+    public function test_show_returns_upcoming_status_before_sale_opens(): void
     {
         $performance = Performance::factory()->upcoming()->create();
 
@@ -56,7 +58,7 @@ class PerformanceTest extends TestCase
             ->assertJsonPath('data.sale_status', 'upcoming');
     }
 
-    public function testShowReturnsClosedStatusAfterSaleCloses(): void
+    public function test_show_returns_closed_status_after_sale_closes(): void
     {
         $performance = Performance::factory()->closed()->create();
 

@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Tests\Unit\Models;
 
@@ -12,7 +14,7 @@ class PerformanceTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function testSaleStatusIsUpcomingBeforeOpen(): void
+    public function test_sale_status_is_upcoming_before_open(): void
     {
         $performance = Performance::factory()->upcoming()->create();
 
@@ -20,7 +22,7 @@ class PerformanceTest extends TestCase
         $this->assertFalse($performance->isSaleOpen());
     }
 
-    public function testSaleStatusIsOpenDuringWindow(): void
+    public function test_sale_status_is_open_during_window(): void
     {
         $performance = Performance::factory()->create([
             'sale_opens_at' => Carbon::now()->subMinute(),
@@ -31,7 +33,7 @@ class PerformanceTest extends TestCase
         $this->assertTrue($performance->isSaleOpen());
     }
 
-    public function testSaleStatusIsClosedAfterClose(): void
+    public function test_sale_status_is_closed_after_close(): void
     {
         $performance = Performance::factory()->closed()->create();
 
@@ -39,7 +41,7 @@ class PerformanceTest extends TestCase
         $this->assertFalse($performance->isSaleOpen());
     }
 
-    public function testFactoryCreatesMatchingSeatInventory(): void
+    public function test_factory_creates_matching_seat_inventory(): void
     {
         $performance = Performance::factory()->withCapacity(5, 3)->create();
 

@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Tests\Unit\Models;
 
@@ -13,7 +15,7 @@ class PurchaseSlotTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function testDuplicateSlotForTheSameUserAndPerformanceIsRejected(): void
+    public function test_duplicate_slot_for_the_same_user_and_performance_is_rejected(): void
     {
         $entry = QueueEntry::factory()->admitted()->create();
         PurchaseSlot::factory()->create([

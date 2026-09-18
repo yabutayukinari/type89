@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Tests\Feature\Database;
 
@@ -13,7 +15,7 @@ class TicketSaleSeederTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function testSeederCreatesOpenDemoPerformanceWithLimitedSeats(): void
+    public function test_seeder_creates_open_demo_performance_with_limited_seats(): void
     {
         $this->seed(TicketSaleSeeder::class);
 
@@ -35,7 +37,7 @@ class TicketSaleSeederTest extends TestCase
             ->assertJsonPath('data.0.show.title', 'MIDNIGHT CIRCUIT VOL.12');
     }
 
-    public function testSeederIsIdempotent(): void
+    public function test_seeder_is_idempotent(): void
     {
         $this->seed(TicketSaleSeeder::class);
         $this->seed(TicketSaleSeeder::class);

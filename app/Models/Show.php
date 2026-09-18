@@ -1,8 +1,11 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace App\Models;
 
 use Database\Factories\ShowFactory;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -15,8 +18,7 @@ use Illuminate\Support\Carbon;
  * @property string $venue_label
  * @property Carbon $created_at
  * @property Carbon $updated_at
- *
- * @property-read \Illuminate\Database\Eloquent\Collection<int, Performance> $performances
+ * @property-read Collection<int, Performance> $performances
  */
 class Show extends Model
 {

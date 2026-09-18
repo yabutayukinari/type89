@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Tests\Unit\Events;
 
@@ -12,7 +14,7 @@ class SeatsUpdatedTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function testBroadcastOnReturnsPerformanceChannel(): void
+    public function test_broadcast_on_returns_performance_channel(): void
     {
         $performance = Performance::factory()->create();
         $inventory = $performance->seatInventory;
@@ -25,7 +27,7 @@ class SeatsUpdatedTest extends TestCase
         $this->assertSame("performance.{$performance->id}", $channels[0]->name);
     }
 
-    public function testBroadcastAsReturnsSeatsUpdated(): void
+    public function test_broadcast_as_returns_seats_updated(): void
     {
         $performance = Performance::factory()->create();
         $inventory = $performance->seatInventory;
@@ -34,7 +36,7 @@ class SeatsUpdatedTest extends TestCase
         $this->assertSame('seats.updated', (new SeatsUpdated($inventory))->broadcastAs());
     }
 
-    public function testBroadcastWithReturnsRemainingSeats(): void
+    public function test_broadcast_with_returns_remaining_seats(): void
     {
         $performance = Performance::factory()->withCapacity(8, 5)->create();
         $inventory = $performance->seatInventory;

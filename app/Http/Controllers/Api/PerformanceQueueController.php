@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace App\Http\Controllers\Api;
 
@@ -15,9 +17,7 @@ use Illuminate\Support\Facades\Auth;
 
 class PerformanceQueueController extends Controller
 {
-    public function __construct(private readonly TicketQueueService $ticketQueue)
-    {
-    }
+    public function __construct(private readonly TicketQueueService $ticketQueue) {}
 
     public function show(Performance $performance): JsonResource
     {

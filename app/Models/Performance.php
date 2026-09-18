@@ -1,10 +1,13 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace App\Models;
 
 use App\Enums\SaleStatus;
 use Database\Factories\PerformanceFactory;
 use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -22,11 +25,10 @@ use Illuminate\Support\Carbon;
  * @property Carbon $created_at
  * @property Carbon $updated_at
  * @property-read SaleStatus $sale_status
- *
  * @property-read Show $show
  * @property-read SeatInventory|null $seatInventory
- * @property-read \Illuminate\Database\Eloquent\Collection<int, QueueEntry> $queueEntries
- * @property-read \Illuminate\Database\Eloquent\Collection<int, PurchaseSlot> $purchaseSlots
+ * @property-read Collection<int, QueueEntry> $queueEntries
+ * @property-read Collection<int, PurchaseSlot> $purchaseSlots
  */
 class Performance extends Model
 {

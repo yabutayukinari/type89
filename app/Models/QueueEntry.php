@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace App\Models;
 
@@ -19,7 +21,6 @@ use Illuminate\Support\Carbon;
  * @property Carbon $joined_at
  * @property Carbon $created_at
  * @property Carbon $updated_at
- *
  * @property-read Performance $performance
  * @property-read User $user
  * @property-read PurchaseSlot|null $purchaseSlot

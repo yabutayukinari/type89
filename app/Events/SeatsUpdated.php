@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace App\Events;
 
@@ -13,9 +15,7 @@ class SeatsUpdated implements ShouldBroadcast
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
-    public function __construct(public SeatInventory $inventory)
-    {
-    }
+    public function __construct(public SeatInventory $inventory) {}
 
     /**
      * @return array<int, Channel>

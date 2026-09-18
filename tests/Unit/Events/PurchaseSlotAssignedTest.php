@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Tests\Unit\Events;
 
@@ -12,7 +14,7 @@ class PurchaseSlotAssignedTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function testBroadcastOnReturnsPrivateUserChannel(): void
+    public function test_broadcast_on_returns_private_user_channel(): void
     {
         $slot = PurchaseSlot::factory()->create();
 
@@ -23,7 +25,7 @@ class PurchaseSlotAssignedTest extends TestCase
         $this->assertSame("private-user.{$slot->user_id}", $channels[0]->name);
     }
 
-    public function testBroadcastAsAndPayload(): void
+    public function test_broadcast_as_and_payload(): void
     {
         $slot = PurchaseSlot::factory()->create();
         $event = new PurchaseSlotAssigned($slot);
