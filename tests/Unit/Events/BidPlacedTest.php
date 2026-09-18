@@ -16,7 +16,7 @@ class BidPlacedTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function testBroadcastOnReturnsAuctionChannelWithId(): void
+    public function test_broadcast_on_returns_auction_channel_with_id(): void
     {
         $auction = Auction::factory()->create();
         $bid = Bid::factory()->create(['auction_id' => $auction->id]);
@@ -28,14 +28,14 @@ class BidPlacedTest extends TestCase
         $this->assertSame("auction.{$auction->id}", $channels[0]->name);
     }
 
-    public function testBroadcastAsReturnsBidPlaced(): void
+    public function test_broadcast_as_returns_bid_placed(): void
     {
         $bid = Bid::factory()->create();
 
         $this->assertSame('bid.placed', (new BidPlaced($bid))->broadcastAs());
     }
 
-    public function testBroadcastWithReturnsExpectedPayload(): void
+    public function test_broadcast_with_returns_expected_payload(): void
     {
         $bidder = User::factory()->create(['name' => 'Alice']);
         $auction = Auction::factory()->create([

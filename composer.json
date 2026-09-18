@@ -14,16 +14,15 @@
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",
-        "friendsofphp/php-cs-fixer": "^3.50",
         "jasonmccreary/laravel-test-assertions": "^2.3",
         "larastan/larastan": "^3.7",
+        "laravel/pint": "^1.18",
         "laravel/sail": "^1.45",
         "mockery/mockery": "^1.6",
         "nunomaduro/collision": "^8.9",
         "phpmd/phpmd": "^2.15",
         "phpunit/phpunit": "^12.0",
-        "spatie/laravel-ignition": "^2.10",
-        "squizlabs/php_codesniffer": "^4.0"
+        "spatie/laravel-ignition": "^2.10"
     },
     "autoload": {
         "psr-4": {
@@ -48,17 +47,11 @@
         "post-create-project-cmd": [
             "@php artisan key:generate --ansi"
         ],
-        "csf": [
-            "./vendor/bin/php-cs-fixer fix -v --diff --dry-run"
+        "pint": [
+            "./vendor/bin/pint --test"
         ],
-        "csf-fix": [
-            "./vendor/bin/php-cs-fixer fix -v"
-        ],
-        "cs": [
-            "./vendor/bin/phpcs --standard=phpcs.xml ./"
-        ],
-        "cs-fix": [
-            "./vendor/bin/phpcbf --standard=phpcs.xml ./"
+        "pint-fix": [
+            "./vendor/bin/pint"
         ],
         "sa": [
             "./vendor/bin/phpstan analyse --memory-limit=2G"
@@ -70,15 +63,13 @@
             "./vendor/bin/phpunit"
         ],
         "tests": [
-            "@csf",
-            "@cs",
+            "@pint",
             "@sa",
             "@md",
             "@test"
         ],
         "build": [
-            "@csf",
-            "@cs",
+            "@pint",
             "@sa",
             "@md"
         ]

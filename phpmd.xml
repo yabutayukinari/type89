@@ -10,7 +10,15 @@
     <exclude name="TooManyMethods" />
     <exclude name="TooManyPublicMethods" />
   </rule>
-  <rule ref="rulesets/controversial.xml" />
+  <rule ref="rulesets/controversial.xml">
+    <!-- Laravel Pint uses snake_case PHPUnit names (test_foo_bar). -->
+    <exclude name="CamelCaseMethodName" />
+  </rule>
+  <rule ref="rulesets/controversial.xml/CamelCaseMethodName">
+    <properties>
+      <property name="allow-underscore-test" value="true" />
+    </properties>
+  </rule>
   <rule ref="rulesets/design.xml">
     <exclude name="NumberOfChildren" />
     <exclude name="CouplingBetweenObjects" />

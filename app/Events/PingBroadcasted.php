@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Events;
 
+use App\Http\Controllers\Api\BroadcastTestController;
 use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
@@ -14,7 +15,7 @@ use Illuminate\Queue\SerializesModels;
  * WebSocket（Reverb）配信経路のスモークテスト用イベント。
  *
  * 本番のビジネスロジックでは使用しない。`POST /api/broadcast-test`
- * （{@see \App\Http\Controllers\Api\BroadcastTestController}）から発火され、
+ * （{@see BroadcastTestController}）から発火され、
  * 公開チャンネル `public.ping` にイベント名 `ping` で配信される。
  *
  * 用途は「Laravel → Reverb → ブラウザ」の疎通確認のみ。
@@ -22,7 +23,7 @@ use Illuminate\Queue\SerializesModels;
  * 切り分けるための診断用エンドポイントとして残している。
  *
  * 削除する場合は以下も併せて削除すること:
- *   - {@see \App\Http\Controllers\Api\BroadcastTestController}
+ *   - {@see BroadcastTestController}
  *   - routes/api.php の `api.broadcast-test` ルート
  *   - routes/channels.php の `public.ping` チャンネル登録
  *   - tests/Unit/Events/PingBroadcastedTest.php
@@ -38,14 +39,13 @@ class PingBroadcasted implements ShouldBroadcast
      * `$message` と `$emittedAt` はそのまま {@see self::broadcastWith()} を
      * 通じてブラウザに送られる。
      *
-     * @param string $message フロントに表示・ログ出力するための任意のメッセージ文字列
-     * @param string $emittedAt サーバ側でイベントを生成した時刻（ISO 8601 形式を想定）
+     * @param  string  $message  フロントに表示・ログ出力するための任意のメッセージ文字列
+     * @param  string  $emittedAt  サーバ側でイベントを生成した時刻（ISO 8601 形式を想定）
      */
     public function __construct(
         public string $message,
         public string $emittedAt,
-    ) {
-    }
+    ) {}
 
     /**
      * 配信先チャンネルを返す。

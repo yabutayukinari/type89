@@ -11,7 +11,7 @@ class ExampleTest extends TestCase
     /**
      * A basic test example.
      */
-    public function testExample(): void
+    public function test_example(): void
     {
         $result = 1 + 1;
         $this->assertSame(2, $result);

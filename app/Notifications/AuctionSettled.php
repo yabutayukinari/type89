@@ -21,9 +21,7 @@ use Illuminate\Notifications\Notification;
  */
 class AuctionSettled extends Notification
 {
-    public function __construct(public Auction $auction)
-    {
-    }
+    public function __construct(public Auction $auction) {}
 
     /**
      * @return array<int, string>

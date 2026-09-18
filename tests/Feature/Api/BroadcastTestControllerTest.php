@@ -18,7 +18,7 @@ class BroadcastTestControllerTest extends TestCase
         $this->withHeader('Origin', 'http://localhost:3000');
     }
 
-    public function testBroadcastTestDispatchesPingAndReturnsPayload(): void
+    public function test_broadcast_test_dispatches_ping_and_returns_payload(): void
     {
         Event::fake();
 

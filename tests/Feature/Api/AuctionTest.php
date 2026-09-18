@@ -21,7 +21,7 @@ class AuctionTest extends TestCase
         $this->withHeader('Origin', 'http://localhost:3000');
     }
 
-    public function testIndexReturnsAllAuctions(): void
+    public function test_index_returns_all_auctions(): void
     {
         Auction::factory()->count(3)->create();
 
@@ -31,7 +31,7 @@ class AuctionTest extends TestCase
             ->assertJsonCount(3, 'data');
     }
 
-    public function testIndexOrdersByIdDescending(): void
+    public function test_index_orders_by_id_descending(): void
     {
         $first = Auction::factory()->create();
         $second = Auction::factory()->create();
@@ -43,7 +43,7 @@ class AuctionTest extends TestCase
         $this->assertSame([$third->id, $second->id, $first->id], $ids);
     }
 
-    public function testShowReturnsSingleAuction(): void
+    public function test_show_returns_single_auction(): void
     {
         $auction = Auction::factory()->create();
 
@@ -59,7 +59,7 @@ class AuctionTest extends TestCase
             ]);
     }
 
-    public function testShowReturnsPendingStatusBeforeStart(): void
+    public function test_show_returns_pending_status_before_start(): void
     {
         $auction = Auction::factory()->pending()->create();
 
@@ -69,7 +69,7 @@ class AuctionTest extends TestCase
             ->assertJsonPath('data.status', 'pending');
     }
 
-    public function testShowReturnsEndedStatusAfterEnd(): void
+    public function test_show_returns_ended_status_after_end(): void
     {
         $auction = Auction::factory()->ended()->create();
 
@@ -79,7 +79,7 @@ class AuctionTest extends TestCase
             ->assertJsonPath('data.status', 'ended');
     }
 
-    public function testShowIncludesCurrentWinnerWhenPresent(): void
+    public function test_show_includes_current_winner_when_present(): void
     {
         $winner = User::factory()->create(['name' => 'Winner Jane']);
         $auction = Auction::factory()->create([
@@ -94,7 +94,7 @@ class AuctionTest extends TestCase
             ->assertJsonPath('data.current_winner.name', 'Winner Jane');
     }
 
-    public function testStoreCreatesAuctionForAuthenticatedUser(): void
+    public function test_store_creates_auction_for_authenticated_user(): void
     {
         $user = User::factory()->create();
 
@@ -126,14 +126,14 @@ class AuctionTest extends TestCase
         ]);
     }
 
-    public function testStoreRequiresAuthentication(): void
+    public function test_store_requires_authentication(): void
     {
         $response = $this->postJson('/api/auctions', []);
 
         $response->assertStatus(401);
     }
 
-    public function testStoreValidatesEndAfterStart(): void
+    public function test_store_validates_end_after_start(): void
     {
         $user = User::factory()->create();
 

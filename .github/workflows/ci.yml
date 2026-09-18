@@ -78,7 +78,7 @@ jobs:
           php artisan key:generate --force
           php artisan key:generate --env=testing --force
 
-      - name: Run static analysis (csf, cs, sa, md)
+      - name: Run static analysis (pint, sa, md)
         run: composer build
 
       - name: Wait for MySQL

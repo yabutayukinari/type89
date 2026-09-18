@@ -13,7 +13,7 @@ class AdminTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function testIsSystemAdminLoggedInReturnsTrueForSystemAdmin(): void
+    public function test_is_system_admin_logged_in_returns_true_for_system_admin(): void
     {
         $admin = Admin::factory()->systemAdmin()->create();
         Auth::guard('admin')->setUser($admin);
@@ -21,7 +21,7 @@ class AdminTest extends TestCase
         $this->assertTrue(Admin::isSystemAdminLoggedIn());
     }
 
-    public function testIsSystemAdminLoggedInReturnsFalseForGeneralAdmin(): void
+    public function test_is_system_admin_logged_in_returns_false_for_general_admin(): void
     {
         $admin = Admin::factory()->generalAdmin()->create();
         Auth::guard('admin')->setUser($admin);
@@ -29,12 +29,12 @@ class AdminTest extends TestCase
         $this->assertFalse(Admin::isSystemAdminLoggedIn());
     }
 
-    public function testIsSystemAdminLoggedInReturnsFalseWhenNotLoggedIn(): void
+    public function test_is_system_admin_logged_in_returns_false_when_not_logged_in(): void
     {
         $this->assertFalse(Admin::isSystemAdminLoggedIn());
     }
 
-    public function testIsSystemAdminInstanceMethod(): void
+    public function test_is_system_admin_instance_method(): void
     {
         $systemAdmin = Admin::factory()->systemAdmin()->create();
         $generalAdmin = Admin::factory()->generalAdmin()->create();

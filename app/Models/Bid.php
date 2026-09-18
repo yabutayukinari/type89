@@ -16,7 +16,6 @@ use Illuminate\Support\Carbon;
  * @property int $user_id
  * @property int $amount
  * @property Carbon $created_at
- *
  * @property-read Auction $auction
  * @property-read User $bidder
  */

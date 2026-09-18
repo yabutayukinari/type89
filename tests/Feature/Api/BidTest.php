@@ -24,7 +24,7 @@ class BidTest extends TestCase
         $this->withHeader('Origin', 'http://localhost:3000');
     }
 
-    public function testIndexReturnsBidsNewestFirst(): void
+    public function test_index_returns_bids_newest_first(): void
     {
         $auction = Auction::factory()->create();
         $first = Bid::factory()->for($auction)->create(['amount' => 1000]);
@@ -39,7 +39,7 @@ class BidTest extends TestCase
             ->assertJsonPath('data.0.bidder.id', $second->bidder->id);
     }
 
-    public function testIndexIsScopedToTheAuction(): void
+    public function test_index_is_scoped_to_the_auction(): void
     {
         $auction = Auction::factory()->create();
         Bid::factory()->for($auction)->create();
@@ -51,7 +51,7 @@ class BidTest extends TestCase
         $response->assertOk()->assertJsonCount(1, 'data');
     }
 
-    public function testPlaceBidSucceedsAndBroadcasts(): void
+    public function test_place_bid_succeeds_and_broadcasts(): void
     {
         Event::fake();
 
@@ -89,7 +89,7 @@ class BidTest extends TestCase
         Event::assertDispatched(BidPlaced::class);
     }
 
-    public function testNextBidMustBeAtLeastIncrementAboveCurrentPrice(): void
+    public function test_next_bid_must_be_at_least_increment_above_current_price(): void
     {
         $previousBidder = User::factory()->create();
         $auction = Auction::factory()->create([
@@ -109,7 +109,7 @@ class BidTest extends TestCase
             ->assertJsonValidationErrors(['amount']);
     }
 
-    public function testCannotBidOnOwnAuction(): void
+    public function test_cannot_bid_on_own_auction(): void
     {
         $seller = User::factory()->create();
         $auction = Auction::factory()->create([
@@ -127,7 +127,7 @@ class BidTest extends TestCase
             ->assertJsonValidationErrors(['amount']);
     }
 
-    public function testCannotBidOnEndedAuction(): void
+    public function test_cannot_bid_on_ended_auction(): void
     {
         $auction = Auction::factory()->ended()->create();
         $bidder = User::factory()->create();
@@ -141,7 +141,7 @@ class BidTest extends TestCase
             ->assertJsonValidationErrors(['amount']);
     }
 
-    public function testCannotBidOnPendingAuction(): void
+    public function test_cannot_bid_on_pending_auction(): void
     {
         $auction = Auction::factory()->pending()->create();
         $bidder = User::factory()->create();
@@ -155,7 +155,7 @@ class BidTest extends TestCase
             ->assertJsonValidationErrors(['amount']);
     }
 
-    public function testBidRequiresAuthentication(): void
+    public function test_bid_requires_authentication(): void
     {
         $auction = Auction::factory()->create();
 
@@ -167,7 +167,7 @@ class BidTest extends TestCase
         $response->assertStatus(401);
     }
 
-    public function testBidValidatesAmountRequired(): void
+    public function test_bid_validates_amount_required(): void
     {
         $auction = Auction::factory()->create();
         $bidder = User::factory()->create();
@@ -181,7 +181,7 @@ class BidTest extends TestCase
             ->assertJsonValidationErrors(['amount']);
     }
 
-    public function testBidValidatesAmountIsPositiveInteger(): void
+    public function test_bid_validates_amount_is_positive_integer(): void
     {
         $auction = Auction::factory()->create();
         $bidder = User::factory()->create();
@@ -195,7 +195,7 @@ class BidTest extends TestCase
             ->assertJsonValidationErrors(['amount']);
     }
 
-    public function testFirstBidMustMeetStartingPrice(): void
+    public function test_first_bid_must_meet_starting_price(): void
     {
         $auction = Auction::factory()->create([
             'starting_price' => 1000,

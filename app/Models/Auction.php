@@ -6,6 +6,7 @@ namespace App\Models;
 
 use Database\Factories\AuctionFactory;
 use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -24,10 +25,9 @@ use Illuminate\Support\Carbon;
  * @property Carbon $starts_at
  * @property Carbon $ends_at
  * @property Carbon|null $settled_at
- *
  * @property-read User $seller
  * @property-read User|null $currentWinner
- * @property-read \Illuminate\Database\Eloquent\Collection<int, Bid> $bids
+ * @property-read Collection<int, Bid> $bids
  */
 class Auction extends Model
 {
@@ -99,6 +99,7 @@ class Auction extends Model
                 if ($this->ends_at->isPast()) {
                     return 'ended';
                 }
+
                 return 'active';
             },
         );

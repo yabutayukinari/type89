@@ -73,6 +73,15 @@ make test
 
 `.env.testing` と `.env` はそれぞれ機密情報（APP_KEY 等）を含むため git 管理外（`.gitignore`）です。`make setup` 実行時に `.env.example` を雛形としてコピーし、`php artisan key:generate` で各環境固有の APP_KEY を生成します。
 
+## コード品質
+
+PHP のフォーマットは Laravel Pint（`laravel` プリセット + 必須の `declare(strict_types=1)`）です。静的解析は Larastan と PHPMD です。
+
+```bash
+make fix    # Pint で整形
+make build  # pint --test + Larastan + PHPMD
+```
+
 ## Git フック
 
 `lefthook.yml` で pre-commit / pre-push を Sail 経由で管理しています（コンテナ起動が前提）。初回のみ:
