@@ -6,9 +6,11 @@ namespace App\Models;
 
 use App\Enums\QueueEntryStatus;
 use Database\Factories\QueueEntryFactory;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Carbon;
 
@@ -24,6 +26,7 @@ use Illuminate\Support\Carbon;
  * @property-read Performance $performance
  * @property-read User $user
  * @property-read PurchaseSlot|null $purchaseSlot
+ * @property-read Collection<int, SlotEvent> $slotEvents
  */
 class QueueEntry extends Model
 {
@@ -72,5 +75,18 @@ class QueueEntry extends Model
     public function purchaseSlot(): HasOne
     {
         return $this->hasOne(PurchaseSlot::class);
+    }
+
+    /**
+     * @return HasMany<SlotEvent, $this>
+     */
+    public function slotEvents(): HasMany
+    {
+        return $this->hasMany(SlotEvent::class);
+    }
+
+    public function canRejoin(): bool
+    {
+        return in_array($this->status, [QueueEntryStatus::Cancelled, QueueEntryStatus::Expired], true);
     }
 }

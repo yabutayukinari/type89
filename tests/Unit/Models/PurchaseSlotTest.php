@@ -46,5 +46,34 @@ class PurchaseSlotTest extends TestCase
         $this->assertTrue($slot->performance->is($entry->performance));
         $this->assertTrue($slot->user->is($entry->user));
         $this->assertTrue($slot->queueEntry->is($entry));
+        $this->assertTrue($slot->isHeld());
+        $this->assertFalse($slot->isConfirmed());
+        $this->assertFalse($slot->isExpiredAt());
+    }
+
+    public function test_confirmed_slot_is_not_expired(): void
+    {
+        $slot = PurchaseSlot::factory()->confirmed()->create();
+
+        $this->assertTrue($slot->isConfirmed());
+        $this->assertFalse($slot->isHeld());
+        $this->assertFalse($slot->isExpiredAt());
+    }
+
+    public function test_held_slot_past_expires_at_is_expired(): void
+    {
+        $slot = PurchaseSlot::factory()->expiredHold()->create();
+
+        $this->assertTrue($slot->isExpiredAt());
+        $this->assertTrue($slot->isExpiredAt(Carbon::now()));
+    }
+
+    public function test_held_slot_without_expires_at_is_not_expired(): void
+    {
+        $slot = PurchaseSlot::factory()->held()->create([
+            'expires_at' => null,
+        ]);
+
+        $this->assertFalse($slot->isExpiredAt());
     }
 }

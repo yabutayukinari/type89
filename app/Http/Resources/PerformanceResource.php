@@ -28,6 +28,7 @@ class PerformanceResource extends JsonResource
             'capacity' => $inventory?->capacity,
             'remaining_seats' => $inventory?->remaining_seats,
             'inventory_updated_at' => $inventory === null ? null : $inventory->updated_at->toIso8601String(),
+            'hold_ttl_seconds' => (int) config('ticket.hold_ttl_seconds'),
             'show' => [
                 'id' => $this->show->id,
                 'title' => $this->show->title,

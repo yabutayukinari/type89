@@ -47,6 +47,7 @@ class PerformanceTest extends TestCase
             ->assertJsonPath('data.capacity', 8)
             ->assertJsonPath('data.remaining_seats', 8)
             ->assertJsonPath('data.inventory_updated_at', $inventory->updated_at->toIso8601String())
+            ->assertJsonPath('data.hold_ttl_seconds', 180)
             ->assertJsonPath('data.show.title', $performance->show->title)
             ->assertJsonPath('data.show.venue_label', $performance->show->venue_label);
     }

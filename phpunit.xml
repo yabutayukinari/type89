@@ -22,5 +22,6 @@
         <env name="QUEUE_CONNECTION" value="sync"/>
         <env name="SESSION_DRIVER" value="array"/>
         <env name="TELESCOPE_ENABLED" value="false"/>
+        <env name="TICKET_HOLD_TTL_SECONDS" value="180"/>
     </php>
 </phpunit>

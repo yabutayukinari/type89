@@ -17,3 +17,6 @@ use Illuminate\Support\Facades\Schedule;
 
 // 終了したオークションを毎分確定し、出品者・落札者へ通知する。
 Schedule::command('auctions:close')->everyMinute()->withoutOverlapping();
+
+// 仮確保の TTL。API 側でも遅延解放するので、スケジューラなしでもデモは進む。
+Schedule::command('tickets:expire-holds')->everyMinute()->withoutOverlapping();

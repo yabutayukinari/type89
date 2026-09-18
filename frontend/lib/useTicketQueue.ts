@@ -5,14 +5,16 @@ import { extractApiMessage } from './apiError';
 import { AuthState, User } from './auth';
 import { getEcho } from './echo';
 import { subscribeEchoConnection } from './echoConnection';
-import { fetchPerformance, fetchQueueStatus, joinQueue } from './performances';
+import { cancelHold, confirmHold, fetchPerformance, fetchQueueStatus, joinQueue } from './performances';
 import {
+  admissionTurnNotice,
   applySeatUpdate,
   EchoConnectionState,
   mergeAdmission,
   Performance,
   QueueAdmission,
   QueueNotice,
+  queueCacheKey,
   readQueueCache,
   seatChangeNotice,
   SeatsUpdatedPayload,
@@ -26,6 +28,8 @@ type UseTicketQueueResult = {
   admission: QueueAdmission | null;
   error: string | null;
   submitting: boolean;
+  confirming: boolean;
+  cancelling: boolean;
   ready: boolean;
   flash: boolean;
   notices: QueueNotice[];
@@ -33,6 +37,8 @@ type UseTicketQueueResult = {
   inventoryStale: boolean;
   lastSyncedAt: number | null;
   handleJoin: () => Promise<void>;
+  handleConfirm: () => Promise<void>;
+  handleCancel: () => Promise<void>;
 };
 
 const MAX_NOTICES = 3;
@@ -50,6 +56,8 @@ export const useTicketQueue = (
   const [liveAdmission, setLiveAdmission] = useState<QueueAdmission | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [confirming, setConfirming] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
   const [queueResolved, setQueueResolved] = useState(false);
   const [flash, setFlash] = useState(false);
   const [notices, setNotices] = useState<QueueNotice[]>([]);
@@ -57,6 +65,8 @@ export const useTicketQueue = (
   const [lastSyncedAt, setLastSyncedAt] = useState<number | null>(null);
 
   const joinLock = useRef(false);
+  const confirmLock = useRef(false);
+  const cancelLock = useRef(false);
   const flashTimer = useRef<number | null>(null);
   const prevRemaining = useRef<number | null>(null);
   const prevWaitingAhead = useRef<number | null>(null);
@@ -84,13 +94,17 @@ export const useTicketQueue = (
   }, []);
 
   const noteSeatAndQueueChanges = useCallback(
-    (nextAdmission: QueueAdmission): void => {
+    (previous: QueueAdmission | null, nextAdmission: QueueAdmission, reason?: SeatsUpdatedPayload['reason']): void => {
       const remaining = nextAdmission.performance.remaining_seats;
       const hasSlot = nextAdmission.purchase_slot != null;
-      const remainingNotice = seatChangeNotice(prevRemaining.current, remaining, hasSlot);
+      const remainingNotice = seatChangeNotice(prevRemaining.current, remaining, hasSlot, reason);
       if (remainingNotice) {
         setNotices((current) => pushNotice(current, remainingNotice));
         bumpFlash();
+      }
+      const turnNotice = admissionTurnNotice(previous, nextAdmission);
+      if (turnNotice) {
+        setNotices((current) => pushNotice(current, turnNotice));
       }
       if (nextAdmission.queue_entry !== null && nextAdmission.purchase_slot === null) {
         const aheadNotice = waitingAheadNotice(prevWaitingAhead.current, nextAdmission.waiting_ahead);
@@ -105,7 +119,7 @@ export const useTicketQueue = (
   );
 
   const commitAdmission = useCallback(
-    (incoming: QueueAdmission, options?: { ignoreStaleSeats?: boolean; gen?: number }) => {
+    (incoming: QueueAdmission, options?: { ignoreStaleSeats?: boolean; gen?: number; reason?: SeatsUpdatedPayload['reason'] }) => {
       if (options?.gen !== undefined && options.gen !== fetchGen.current) {
         return;
       }
@@ -118,6 +132,7 @@ export const useTicketQueue = (
               capacity: merged.performance.capacity,
               remaining_seats: merged.performance.remaining_seats,
               inventory_updated_at: merged.performance.inventory_updated_at,
+              reason: options.reason,
             })
           : merged.performance;
       const next = { ...merged, performance: nextPerformance };
@@ -125,7 +140,7 @@ export const useTicketQueue = (
       if (userId !== null) {
         writeQueueCache(userId, performanceId, next);
       }
-      noteSeatAndQueueChanges(next);
+      noteSeatAndQueueChanges(previous, next, options?.reason);
       setLiveAdmission(next);
       setLivePerformance((current) => {
         const baseline = current ?? previous?.performance ?? null;
@@ -137,6 +152,7 @@ export const useTicketQueue = (
           capacity: incoming.performance.capacity,
           remaining_seats: incoming.performance.remaining_seats,
           inventory_updated_at: incoming.performance.inventory_updated_at,
+          reason: options.reason,
         });
       });
       setLastSyncedAt(Date.now());
@@ -222,7 +238,7 @@ export const useTicketQueue = (
         void refreshStatus();
         return;
       }
-      const remainingNotice = seatChangeNotice(prevRemaining.current, payload.remaining_seats, false);
+      const remainingNotice = seatChangeNotice(prevRemaining.current, payload.remaining_seats, false, payload.reason);
       if (remainingNotice) {
         setNotices((current) => pushNotice(current, remainingNotice));
         bumpFlash();
@@ -266,7 +282,7 @@ export const useTicketQueue = (
     if (userId === null) {
       return;
     }
-    const key = `type89.ticket-queue.v1.${userId}.${performanceId}`;
+    const key = queueCacheKey(userId, performanceId);
     const onStorage = (event: StorageEvent): void => {
       if (event.key !== key || event.newValue === null) {
         return;
@@ -284,52 +300,92 @@ export const useTicketQueue = (
   }, [commitAdmission, performanceId, userId]);
 
   const waitingWithoutSlot = admission?.queue_entry !== null && admission?.purchase_slot === null;
+  const holdingUnconfirmed = admission?.purchase_slot?.status === 'held';
   useEffect(() => {
-    if (!waitingWithoutSlot || !isAuthenticated) {
+    if ((!waitingWithoutSlot && !holdingUnconfirmed) || !isAuthenticated) {
       return;
     }
     const timer = window.setInterval(() => {
       void refreshStatus();
     }, 2000);
     return () => window.clearInterval(timer);
-  }, [waitingWithoutSlot, isAuthenticated, refreshStatus]);
+  }, [waitingWithoutSlot, holdingUnconfirmed, isAuthenticated, refreshStatus]);
 
-    const handleJoin = async (): Promise<void> => {
-    if (joinLock.current) {
+  const mutateQueue = async (
+    action: () => Promise<QueueAdmission>,
+    setBusy: (busy: boolean) => void,
+    lock: { current: boolean },
+    fallback: string,
+    options?: { persistLockOnSuccess?: boolean; recoverSilent?: (recovered: QueueAdmission) => boolean },
+  ): Promise<void> => {
+    if (lock.current) {
       return;
     }
-    joinLock.current = true;
+    lock.current = true;
     setError(null);
-    setSubmitting(true);
+    setBusy(true);
     try {
       const gen = fetchGen.current + 1;
       fetchGen.current = gen;
-      const next = await joinQueue(performanceId);
+      const next = await action();
       commitAdmission(next, { gen });
     } catch (err: unknown) {
       try {
         const gen = fetchGen.current + 1;
         fetchGen.current = gen;
         const recovered = await fetchQueueStatus(performanceId);
-        if (recovered.queue_entry !== null) {
-          commitAdmission(recovered, { gen });
+        commitAdmission(recovered, { gen });
+        if (options?.recoverSilent?.(recovered)) {
           setError(null);
           return;
         }
+        setError(
+          err && typeof err === 'object' && 'response' in err
+            ? extractApiMessage(err, fallback)
+            : err instanceof Error
+              ? err.message
+              : fallback,
+        );
+        if (!options?.persistLockOnSuccess) {
+          lock.current = false;
+        }
+        return;
       } catch {
-        // fall through to the original join error
+        // fall through to the original error
       }
-      joinLock.current = false;
+      lock.current = false;
       const message =
         err && typeof err === 'object' && 'response' in err
-          ? extractApiMessage(err, '待機列に並べませんでした')
+          ? extractApiMessage(err, fallback)
           : err instanceof Error
             ? err.message
-            : '待機列に並べませんでした';
+            : fallback;
       setError(message);
     } finally {
-      setSubmitting(false);
+      setBusy(false);
+      if (!options?.persistLockOnSuccess) {
+        lock.current = false;
+      }
     }
+  };
+
+  const handleJoin = async (): Promise<void> => {
+    await mutateQueue(() => joinQueue(performanceId), setSubmitting, joinLock, '待機列に並べませんでした', {
+      persistLockOnSuccess: true,
+      recoverSilent: (recovered) => recovered.queue_entry !== null,
+    });
+  };
+
+  const handleConfirm = async (): Promise<void> => {
+    await mutateQueue(() => confirmHold(performanceId), setConfirming, confirmLock, '枠を確定できませんでした', {
+      recoverSilent: (recovered) => recovered.purchase_slot?.status === 'confirmed',
+    });
+  };
+
+  const handleCancel = async (): Promise<void> => {
+    await mutateQueue(() => cancelHold(performanceId), setCancelling, cancelLock, '枠を取り消せませんでした', {
+      recoverSilent: (recovered) => recovered.queue_entry?.status === 'cancelled',
+    });
   };
 
   const authPending = auth.state === 'loading';
@@ -342,6 +398,8 @@ export const useTicketQueue = (
     admission: isAuthenticated ? admission : null,
     error,
     submitting,
+    confirming,
+    cancelling,
     ready,
     flash,
     notices,
@@ -349,5 +407,7 @@ export const useTicketQueue = (
     inventoryStale,
     lastSyncedAt,
     handleJoin,
+    handleConfirm,
+    handleCancel,
   };
 };

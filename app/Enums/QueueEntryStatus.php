@@ -8,4 +8,7 @@ enum QueueEntryStatus: string
 {
     case Waiting = 'waiting';
     case Admitted = 'admitted';
+    case Confirmed = 'confirmed';
+    case Cancelled = 'cancelled';
+    case Expired = 'expired';
 }

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Events;
 
+use App\Enums\SeatUpdateReason;
+use App\Enums\SlotReleaseReason;
 use App\Events\SeatsUpdated;
 use App\Models\Performance;
 use Illuminate\Broadcasting\Channel;
@@ -48,5 +50,19 @@ class SeatsUpdatedTest extends TestCase
         $this->assertSame(8, $payload['capacity']);
         $this->assertSame(5, $payload['remaining_seats']);
         $this->assertSame($inventory->updated_at->toIso8601String(), $payload['inventory_updated_at']);
+        $this->assertSame('assigned', $payload['reason']);
+        $this->assertNull($payload['release_reason']);
+    }
+
+    public function test_broadcast_with_includes_release_reason(): void
+    {
+        $performance = Performance::factory()->withCapacity(8, 6)->create();
+        $inventory = $performance->seatInventory;
+        $this->assertNotNull($inventory);
+
+        $payload = (new SeatsUpdated($inventory, SeatUpdateReason::Released, SlotReleaseReason::SelfCancel))->broadcastWith();
+
+        $this->assertSame('released', $payload['reason']);
+        $this->assertSame('self_cancel', $payload['release_reason']);
     }
 }

@@ -29,6 +29,7 @@ use Illuminate\Support\Carbon;
  * @property-read SeatInventory|null $seatInventory
  * @property-read Collection<int, QueueEntry> $queueEntries
  * @property-read Collection<int, PurchaseSlot> $purchaseSlots
+ * @property-read Collection<int, SlotEvent> $slotEvents
  */
 class Performance extends Model
 {
@@ -85,6 +86,14 @@ class Performance extends Model
     public function purchaseSlots(): HasMany
     {
         return $this->hasMany(PurchaseSlot::class);
+    }
+
+    /**
+     * @return HasMany<SlotEvent, $this>
+     */
+    public function slotEvents(): HasMany
+    {
+        return $this->hasMany(SlotEvent::class);
     }
 
     /**

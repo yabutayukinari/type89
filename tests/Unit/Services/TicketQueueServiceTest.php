@@ -4,10 +4,13 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Services;
 
+use App\Enums\PurchaseSlotStatus;
 use App\Enums\QueueEntryStatus;
+use App\Enums\SlotEventType;
 use App\Models\Performance;
 use App\Models\PurchaseSlot;
 use App\Models\QueueEntry;
+use App\Models\SlotEvent;
 use App\Models\User;
 use App\Services\TicketQueueService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -73,6 +76,8 @@ class TicketQueueServiceTest extends TestCase
                     'user_id' => $slot->user_id,
                     'queue_entry_id' => $slot->queue_entry_id,
                     'assigned_at' => Carbon::now(),
+                    'status' => PurchaseSlotStatus::Held,
+                    'expires_at' => Carbon::now()->addMinutes(3),
                 ]);
             });
         });
@@ -112,5 +117,87 @@ class TicketQueueServiceTest extends TestCase
             $performance->seatInventory()->firstOrFail()->remaining_seats,
         );
         $this->assertSame([], $admission->newlyAssignedSlots);
+    }
+
+    public function test_expire_holds_is_noop_when_nothing_is_expired(): void
+    {
+        $performance = Performance::factory()->withCapacity(1)->create();
+        $admission = app(TicketQueueService::class)->expireHolds($performance);
+
+        $this->assertSame([], $admission->releasedUserIds());
+        $this->assertNull($admission->seatUpdateReason());
+        $this->assertNull($admission->queueEntry);
+    }
+
+    public function test_view_does_not_admit_or_decrement_inventory(): void
+    {
+        $performance = Performance::factory()->withCapacity(2)->create();
+        $user = User::factory()->create();
+        app(TicketQueueService::class)->join($performance, $user);
+        $remaining = $performance->seatInventory()->firstOrFail()->remaining_seats;
+
+        $view = app(TicketQueueService::class)->view($performance, $user);
+
+        $this->assertNotNull($view->purchaseSlot);
+        $this->assertSame($remaining, $performance->seatInventory()->firstOrFail()->remaining_seats);
+    }
+
+    public function test_organizer_inventory_summarises_holds(): void
+    {
+        $performance = Performance::factory()->withCapacity(2)->create();
+        $user = User::factory()->create();
+        app(TicketQueueService::class)->join($performance, $user);
+
+        $inventory = app(TicketQueueService::class)->organizerInventory($performance);
+
+        $this->assertSame(1, $inventory->heldCount);
+        $this->assertSame(0, $inventory->confirmedCount);
+        $this->assertSame(0, $inventory->waitingCount);
+        $this->assertCount(1, $inventory->currentSlots);
+        $this->assertTrue($inventory->events->isNotEmpty());
+    }
+
+    public function test_join_keeps_an_existing_confirmed_slot(): void
+    {
+        $performance = Performance::factory()->withCapacity(2)->create();
+        $user = User::factory()->create();
+        $entry = QueueEntry::factory()->confirmed()->create([
+            'performance_id' => $performance->id,
+            'user_id' => $user->id,
+            'status' => QueueEntryStatus::Confirmed,
+            'position' => 1,
+        ]);
+        $slot = PurchaseSlot::factory()->confirmed()->create([
+            'performance_id' => $performance->id,
+            'user_id' => $user->id,
+            'queue_entry_id' => $entry->id,
+        ]);
+
+        $admission = app(TicketQueueService::class)->join($performance, $user);
+
+        $this->assertTrue($admission->purchaseSlot?->is($slot));
+        $this->assertSame(QueueEntryStatus::Confirmed, $entry->fresh()?->status);
+        $this->assertSame(2, $performance->seatInventory()->firstOrFail()->remaining_seats);
+    }
+
+    public function test_view_ignores_release_events_without_a_reason(): void
+    {
+        $performance = Performance::factory()->withCapacity(1)->create();
+        $user = User::factory()->create();
+        $entry = QueueEntry::factory()->cancelled()->create([
+            'performance_id' => $performance->id,
+            'user_id' => $user->id,
+        ]);
+        SlotEvent::factory()->released()->create([
+            'performance_id' => $performance->id,
+            'user_id' => $user->id,
+            'queue_entry_id' => $entry->id,
+            'type' => SlotEventType::Released,
+            'release_reason' => null,
+        ]);
+
+        $view = app(TicketQueueService::class)->view($performance, $user);
+
+        $this->assertNull($view->lastRelease());
     }
 }

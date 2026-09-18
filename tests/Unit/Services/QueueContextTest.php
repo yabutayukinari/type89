@@ -84,4 +84,32 @@ class QueueContextTest extends TestCase
         $this->assertSame(QueueWaitReason::Assigning, $context->waitReason);
         $this->assertSame(0, $context->waitingAhead);
     }
+
+    public function test_confirmed_holders_count_as_admitted(): void
+    {
+        $performance = Performance::factory()->withCapacity(1, 0)->create();
+        $holder = User::factory()->create();
+        $waiting = User::factory()->create();
+        $holderEntry = QueueEntry::factory()->confirmed()->create([
+            'performance_id' => $performance->id,
+            'user_id' => $holder->id,
+            'position' => 1,
+        ]);
+        PurchaseSlot::factory()->confirmed()->create([
+            'performance_id' => $performance->id,
+            'user_id' => $holder->id,
+            'queue_entry_id' => $holderEntry->id,
+        ]);
+        $entry = QueueEntry::factory()->create([
+            'performance_id' => $performance->id,
+            'user_id' => $waiting->id,
+            'status' => QueueEntryStatus::Waiting,
+            'position' => 2,
+        ]);
+
+        $context = QueueContext::for($performance->load('seatInventory'), $entry, null);
+
+        $this->assertSame(1, $context->admittedCount);
+        $this->assertSame(QueueWaitReason::SoldOut, $context->waitReason);
+    }
 }

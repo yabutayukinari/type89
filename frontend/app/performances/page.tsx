@@ -37,7 +37,7 @@ export default function PerformancesListPage() {
       <div className="mx-auto flex w-full max-w-3xl flex-col gap-4 p-6 pt-10">
         <header>
           <h1 className="text-2xl font-bold tracking-tight">公演チケット</h1>
-          <p className="mt-1 text-sm text-zinc-500">フラッシュ販売のデモ。並んで、1人1枠まで。決済は行いません。</p>
+          <p className="mt-1 text-sm text-zinc-500">フラッシュ販売のデモ。並んで仮確保し、期限内に確定。決済はありません。</p>
         </header>
 
         {error && (

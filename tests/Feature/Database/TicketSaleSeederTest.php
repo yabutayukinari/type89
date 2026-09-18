@@ -29,6 +29,7 @@ class TicketSaleSeederTest extends TestCase
             'capacity' => 8,
             'remaining_seats' => 8,
         ]);
+        $this->assertDatabaseHas('admins', ['email' => 'admin@example.com']);
 
         $this->getJson('/api/performances')
             ->assertOk()

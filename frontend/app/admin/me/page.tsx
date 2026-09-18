@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
+import Link from 'next/link';
 import { logoutAdmin, useAdmin } from '@/lib/auth';
 
 export default function AdminDashboardPage() {
@@ -42,6 +43,12 @@ export default function AdminDashboardPage() {
         <dt className="text-zinc-500">role</dt>
         <dd>{auth.principal.role}</dd>
       </dl>
+      <Link
+        href="/admin/performances"
+        className="rounded border border-violet-300 bg-violet-50 px-4 py-2 text-center text-base font-medium text-violet-900"
+      >
+        公演の在庫を見る
+      </Link>
       <button
         type="button"
         onClick={handleLogout}

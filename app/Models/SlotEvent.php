@@ -4,8 +4,9 @@ declare(strict_types=1);
 
 namespace App\Models;
 
-use App\Enums\PurchaseSlotStatus;
-use Database\Factories\PurchaseSlotFactory;
+use App\Enums\SlotEventType;
+use App\Enums\SlotReleaseReason;
+use Database\Factories\SlotEventFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -16,29 +17,29 @@ use Illuminate\Support\Carbon;
  * @property int $performance_id
  * @property int $user_id
  * @property int $queue_entry_id
- * @property PurchaseSlotStatus $status
- * @property Carbon $assigned_at
- * @property Carbon|null $expires_at
- * @property Carbon|null $confirmed_at
+ * @property SlotEventType $type
+ * @property SlotReleaseReason|null $release_reason
+ * @property int $remaining_seats_after
+ * @property Carbon $occurred_at
  * @property Carbon $created_at
  * @property Carbon $updated_at
  * @property-read Performance $performance
  * @property-read User $user
  * @property-read QueueEntry $queueEntry
  */
-class PurchaseSlot extends Model
+class SlotEvent extends Model
 {
-    /** @use HasFactory<PurchaseSlotFactory> */
+    /** @use HasFactory<SlotEventFactory> */
     use HasFactory;
 
     protected $fillable = [
         'performance_id',
         'user_id',
         'queue_entry_id',
-        'status',
-        'assigned_at',
-        'expires_at',
-        'confirmed_at',
+        'type',
+        'release_reason',
+        'remaining_seats_after',
+        'occurred_at',
     ];
 
     /**
@@ -49,10 +50,10 @@ class PurchaseSlot extends Model
         'performance_id' => 'integer',
         'user_id' => 'integer',
         'queue_entry_id' => 'integer',
-        'status' => PurchaseSlotStatus::class,
-        'assigned_at' => 'datetime',
-        'expires_at' => 'datetime',
-        'confirmed_at' => 'datetime',
+        'type' => SlotEventType::class,
+        'release_reason' => SlotReleaseReason::class,
+        'remaining_seats_after' => 'integer',
+        'occurred_at' => 'datetime',
     ];
 
     /**
@@ -77,24 +78,5 @@ class PurchaseSlot extends Model
     public function queueEntry(): BelongsTo
     {
         return $this->belongsTo(QueueEntry::class);
-    }
-
-    public function isHeld(): bool
-    {
-        return $this->status === PurchaseSlotStatus::Held;
-    }
-
-    public function isConfirmed(): bool
-    {
-        return $this->status === PurchaseSlotStatus::Confirmed;
-    }
-
-    public function isExpiredAt(?Carbon $now = null): bool
-    {
-        if (! $this->isHeld() || $this->expires_at === null) {
-            return false;
-        }
-
-        return $this->expires_at->lte($now ?? Carbon::now());
     }
 }

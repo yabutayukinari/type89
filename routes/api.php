@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Http\Controllers\Api\Admin\AuthController as AdminAuthController;
+use App\Http\Controllers\Api\Admin\PerformanceInventoryController;
 use App\Http\Controllers\Api\AuctionController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BidController;
@@ -21,6 +22,8 @@ Route::get('/performances/{performance}', [PerformanceController::class, 'show']
 Route::middleware('auth:web')->group(static function (): void {
     Route::get('/performances/{performance}/queue', [PerformanceQueueController::class, 'show'])->name('api.performances.queue.show');
     Route::post('/performances/{performance}/queue', [PerformanceQueueController::class, 'store'])->name('api.performances.queue.store');
+    Route::post('/performances/{performance}/queue/confirm', [PerformanceQueueController::class, 'confirm'])->name('api.performances.queue.confirm');
+    Route::post('/performances/{performance}/queue/cancel', [PerformanceQueueController::class, 'cancel'])->name('api.performances.queue.cancel');
 });
 
 Route::get('/auctions', [AuctionController::class, 'index'])->name('api.auctions.index');
@@ -44,5 +47,7 @@ Route::prefix('admin')->name('api.admin.')->group(static function (): void {
     Route::middleware('auth:admin')->group(static function (): void {
         Route::post('/logout', [AdminAuthController::class, 'logout'])->name('logout');
         Route::get('/me', [AdminAuthController::class, 'me'])->name('me');
+        Route::get('/performances', [PerformanceInventoryController::class, 'index'])->name('performances.index');
+        Route::get('/performances/{performance}', [PerformanceInventoryController::class, 'show'])->name('performances.show');
     });
 });
