@@ -31,6 +31,10 @@ class QueueAdmissionResource extends JsonResource
                 'id' => $slot->id,
                 'assigned_at' => $slot->assigned_at->toIso8601String(),
             ],
+            'waiting_ahead' => $this->waitingAhead,
+            'waiting_count' => $this->waitingCount,
+            'admitted_count' => $this->admittedCount,
+            'wait_reason' => $this->waitReason?->value,
         ];
     }
 }

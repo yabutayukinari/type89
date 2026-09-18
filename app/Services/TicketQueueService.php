@@ -38,11 +38,7 @@ class TicketQueueService
             $entry = $this->findOrCreateQueueEntry($locked['performance'], $user);
             $assigned = $this->admitWaiting($locked['performance'], $locked['inventory']);
 
-            $entry->refresh();
-            $slot = $this->slotFor($locked['performance'], $user);
-            $performance = $this->performanceWithInventory($locked['performance']->id);
-
-            return new QueueAdmission($performance, $entry, $slot, $assigned);
+            return $this->snapshot($locked['performance']->id, $user, $entry, $assigned);
         });
 
         return $admission;
@@ -50,14 +46,20 @@ class TicketQueueService
 
     public function status(Performance $performance, User $user): QueueAdmission
     {
-        $performance = $this->performanceWithInventory($performance->id);
-        $entry = QueueEntry::query()
-            ->where('performance_id', $performance->id)
-            ->where('user_id', $user->id)
-            ->first();
-        $slot = $this->slotFor($performance, $user);
+        /** @var QueueAdmission $admission */
+        $admission = DB::transaction(function () use ($performance, $user): QueueAdmission {
+            $locked = $this->lockPerformance($performance);
+            $entry = $this->existingEntry($locked['performance'], $user);
+            $assigned = [];
 
-        return new QueueAdmission($performance, $entry, $slot);
+            if ($entry instanceof QueueEntry) {
+                $assigned = $this->admitWaiting($locked['performance'], $locked['inventory']);
+            }
+
+            return $this->snapshot($locked['performance']->id, $user, $entry, $assigned);
+        });
+
+        return $admission;
     }
 
     /**
@@ -77,13 +79,17 @@ class TicketQueueService
         ];
     }
 
-    private function findOrCreateQueueEntry(Performance $performance, User $user): QueueEntry
+    private function existingEntry(Performance $performance, User $user): ?QueueEntry
     {
-        $existing = QueueEntry::query()
+        return QueueEntry::query()
             ->where('performance_id', $performance->id)
             ->where('user_id', $user->id)
             ->first();
+    }
 
+    private function findOrCreateQueueEntry(Performance $performance, User $user): QueueEntry
+    {
+        $existing = $this->existingEntry($performance, $user);
         if ($existing instanceof QueueEntry) {
             return $existing;
         }
@@ -174,6 +180,26 @@ class TicketQueueService
             ->max('position');
 
         return ((int) $max) + 1;
+    }
+
+    /**
+     * @param  list<PurchaseSlot>  $assigned
+     */
+    private function snapshot(
+        int $performanceId,
+        User $user,
+        ?QueueEntry $entry,
+        array $assigned,
+    ): QueueAdmission {
+        if ($entry instanceof QueueEntry) {
+            $entry->refresh();
+        }
+
+        $performance = $this->performanceWithInventory($performanceId);
+        $slot = $this->slotFor($performance, $user);
+
+        return (new QueueAdmission($performance, $entry, $slot, $assigned))
+            ->withContext(QueueContext::for($performance, $entry, $slot));
     }
 
     private function slotFor(Performance $performance, User $user): ?PurchaseSlot

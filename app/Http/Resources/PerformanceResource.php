@@ -27,6 +27,7 @@ class PerformanceResource extends JsonResource
             'sale_status' => $this->sale_status->value,
             'capacity' => $inventory?->capacity,
             'remaining_seats' => $inventory?->remaining_seats,
+            'inventory_updated_at' => $inventory === null ? null : $inventory->updated_at->toIso8601String(),
             'show' => [
                 'id' => $this->show->id,
                 'title' => $this->show->title,

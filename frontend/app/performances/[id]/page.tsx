@@ -1,20 +1,11 @@
 'use client';
 
 import Link from 'next/link';
-import { use, useEffect, useRef, useState } from 'react';
-import { extractApiMessage } from '@/lib/apiError';
+import { use, useMemo } from 'react';
 import { useUser } from '@/lib/auth';
 import { useCountdown } from '@/lib/countdown';
-import { getEcho } from '@/lib/echo';
-import {
-  fetchPerformance,
-  fetchQueueStatus,
-  joinQueue,
-  Performance,
-  QueueAdmission,
-  SeatsUpdatedPayload,
-  SlotAssignedPayload,
-} from '@/lib/performances';
+import { connectionCopy, waitReasonCopy } from '@/lib/ticketQueueTrust';
+import { useTicketQueue } from '@/lib/useTicketQueue';
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -26,160 +17,43 @@ const joinSteps = [
   { key: 'secured' as const, label: '枠確保' },
 ];
 
+const relativeTime = (timestamp: number | null): string => {
+  if (timestamp === null) {
+    return '未確認';
+  }
+  const delta = Math.max(0, Math.round((Date.now() - timestamp) / 1000));
+  if (delta < 3) {
+    return 'たった今';
+  }
+  if (delta < 60) {
+    return `${delta}秒前`;
+  }
+  return `${Math.round(delta / 60)}分前`;
+};
+
 export default function PerformanceDetailPage({ params }: Props) {
   const { id } = use(params);
   const performanceId = Number(id);
   const { auth } = useUser();
-  const [performance, setPerformance] = useState<Performance | null>(null);
-  const [admission, setAdmission] = useState<QueueAdmission | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [submitting, setSubmitting] = useState(false);
-  const [flash, setFlash] = useState(false);
-  const prevRemaining = useRef<number | null>(null);
-
-  const isAuthenticated = auth.state === 'authenticated';
-
-  useEffect(() => {
-    let cancelled = false;
-    fetchPerformance(performanceId).then((data) => {
-      if (!cancelled) setPerformance(data);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [performanceId]);
-
-  useEffect(() => {
-    if (!isAuthenticated) {
-      return;
-    }
-    let cancelled = false;
-    fetchQueueStatus(performanceId).then((data) => {
-      if (!cancelled) {
-        setAdmission(data);
-        setPerformance(data.performance);
-      }
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [performanceId, isAuthenticated]);
-
-  useEffect(() => {
-    const echo = getEcho();
-    const channel = echo.channel(`performance.${performanceId}`);
-    channel.listen('.seats.updated', (payload: SeatsUpdatedPayload) => {
-      setPerformance((prev) =>
-        prev
-          ? { ...prev, remaining_seats: payload.remaining_seats, capacity: payload.capacity }
-          : prev,
-      );
-      setAdmission((prev) =>
-        prev
-          ? {
-              ...prev,
-              performance: {
-                ...prev.performance,
-                remaining_seats: payload.remaining_seats,
-                capacity: payload.capacity,
-              },
-            }
-          : prev,
-      );
-    });
-    return () => {
-      echo.leave(`performance.${performanceId}`);
-    };
-  }, [performanceId]);
-
-  useEffect(() => {
-    if (auth.state !== 'authenticated') {
-      return;
-    }
-    const userId = auth.principal.id;
-    const echo = getEcho();
-    const channelName = `user.${userId}`;
-    echo.private(channelName).listen('.slot.assigned', (payload: SlotAssignedPayload) => {
-      if (payload.purchase_slot.performance_id !== performanceId) {
-        return;
-      }
-      setAdmission((prev) =>
-        prev
-          ? {
-              ...prev,
-              queue_entry: {
-                id: payload.queue_entry.id,
-                status: payload.queue_entry.status,
-                position: payload.queue_entry.position,
-                joined_at: prev.queue_entry?.joined_at ?? new Date().toISOString(),
-              },
-              purchase_slot: {
-                id: payload.purchase_slot.id,
-                assigned_at: payload.purchase_slot.assigned_at,
-              },
-            }
-          : prev,
-      );
-    });
-    return () => {
-      echo.leave(channelName);
-    };
-  }, [auth, performanceId]);
-
-  const visibleAdmission = isAuthenticated ? admission : null;
-  const waitingWithoutSlot =
-    visibleAdmission?.queue_entry !== null && visibleAdmission?.purchase_slot === null;
-  useEffect(() => {
-    if (!waitingWithoutSlot || !isAuthenticated) {
-      return;
-    }
-    const timer = window.setInterval(() => {
-      fetchQueueStatus(performanceId).then((data) => {
-        setAdmission(data);
-        setPerformance(data.performance);
-      });
-    }, 2000);
-    return () => window.clearInterval(timer);
-  }, [waitingWithoutSlot, isAuthenticated, performanceId]);
-
-  useEffect(() => {
-    const remaining = performance?.remaining_seats;
-    if (remaining === undefined) {
-      return;
-    }
-    if (prevRemaining.current !== null && prevRemaining.current !== remaining) {
-      setFlash(true);
-      prevRemaining.current = remaining;
-      const timer = window.setTimeout(() => setFlash(false), 900);
-      return () => window.clearTimeout(timer);
-    }
-    prevRemaining.current = remaining;
-  }, [performance?.remaining_seats]);
-
-  const handleJoin = async () => {
-    setError(null);
-    setSubmitting(true);
-    try {
-      const next = await joinQueue(performanceId);
-      setAdmission(next);
-      setPerformance(next.performance);
-    } catch (err: unknown) {
-      const message =
-        err && typeof err === 'object' && 'response' in err
-          ? extractApiMessage(err, '待機列に並べませんでした')
-          : err instanceof Error
-            ? err.message
-            : '待機列に並べませんでした';
-      setError(message);
-    } finally {
-      setSubmitting(false);
-    }
-  };
+  const queue = useTicketQueue(performanceId, auth);
+  const { performance, admission, error, submitting, ready, flash, notices, connectionState, inventoryStale, lastSyncedAt, handleJoin } =
+    queue;
 
   const saleCountdown = useCountdown(performance?.sale_opens_at ?? new Date().toISOString());
   const closeCountdown = useCountdown(performance?.sale_closes_at ?? new Date().toISOString());
 
-  if (!performance) {
+  const isAuthenticated = auth.state === 'authenticated';
+  const hasSlot = admission?.purchase_slot != null;
+  const inQueue = admission?.queue_entry != null;
+  const joinState: 'idle' | 'waiting' | 'secured' = hasSlot ? 'secured' : inQueue ? 'waiting' : 'idle';
+  const joinDisabled = submitting || joinState !== 'idle';
+
+  const waitCopy = useMemo(
+    () => waitReasonCopy(admission?.wait_reason ?? null, admission?.admitted_count ?? 0, admission?.waiting_ahead ?? 0),
+    [admission?.admitted_count, admission?.wait_reason, admission?.waiting_ahead],
+  );
+
+  if (!ready || !performance) {
     return (
       <main className="grid min-h-screen place-items-center bg-zinc-950 text-sm text-zinc-400">
         読み込み中...
@@ -195,9 +69,6 @@ export default function PerformanceDetailPage({ params }: Props) {
         : performance.sale_status;
   const isOpen = saleStatus === 'open';
   const soldOut = performance.remaining_seats === 0;
-  const hasSlot = visibleAdmission?.purchase_slot !== null && visibleAdmission?.purchase_slot !== undefined;
-  const inQueue = visibleAdmission?.queue_entry !== null && visibleAdmission?.queue_entry !== undefined;
-  const joinState: 'idle' | 'waiting' | 'secured' = hasSlot ? 'secured' : inQueue ? 'waiting' : 'idle';
   const joinStateIndex = joinSteps.findIndex((step) => step.key === joinState);
 
   return (
@@ -240,38 +111,81 @@ export default function PerformanceDetailPage({ params }: Props) {
         {hasSlot && (
           <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-5">
             <p className="text-4xl font-black tracking-tight text-emerald-300 md:text-5xl">枠取れた！</p>
-            <p className="mt-2 text-sm text-zinc-200">このセッションの購入枠は1つだけです。決済は行いません。</p>
-            <p className="mt-3 text-xs leading-relaxed text-zinc-500">
-              デモはここまでです。別のブラウザで demo2@example.com にログインすると、同じ公演の残席が減る様子を確認できます。
-            </p>
+            <p className="mt-2 text-sm text-zinc-200">このアカウントの購入枠は1つだけ確保済みです。決済は行いません。</p>
+            {soldOut ? (
+              <p className="mt-3 text-sm leading-relaxed text-emerald-100/90">
+                全体の残り席は0（満席）ですが、それは他の人向けの数字です。あなたの枠はすでに確保されており、全体残席には含まれません。
+              </p>
+            ) : (
+              <p className="mt-3 text-sm leading-relaxed text-zinc-400">
+                下の残り席は全体の在庫です。あなたの枠は別カウントなので、残席が減っても確保は取り消されません。
+              </p>
+            )}
           </div>
         )}
 
         {joinState === 'waiting' ? (
           <div>
-            <p className="text-xs font-medium tracking-wider text-zinc-500">自分の番</p>
+            <p className="text-xs font-medium tracking-wider text-zinc-500">並び順（参加時点で確定）</p>
             <p className="text-5xl font-black leading-none tracking-tight tabular-nums">
-              {visibleAdmission?.queue_entry?.position}
+              {admission?.queue_entry?.position}
               <span className="ml-2 text-lg font-semibold text-zinc-400">番目</span>
             </p>
+            <p className="mt-2 text-sm text-zinc-500">この番号は減りません。進み具合は前の待機人数と残席で分かります。</p>
+            <dl className="mt-4 grid grid-cols-2 gap-3 text-sm">
+              <div className="rounded-xl border border-zinc-800 bg-zinc-900 px-3 py-2">
+                <dt className="text-[11px] text-zinc-500">前の待機</dt>
+                <dd className="text-lg font-bold tabular-nums">{admission?.waiting_ahead ?? 0}人</dd>
+              </div>
+              <div className="rounded-xl border border-zinc-800 bg-zinc-900 px-3 py-2">
+                <dt className="text-[11px] text-zinc-500">枠を確保した人</dt>
+                <dd className="text-lg font-bold tabular-nums">{admission?.admitted_count ?? 0}人</dd>
+              </div>
+            </dl>
             <p className="mt-3 text-sm text-zinc-500">
-              全体の残席{' '}
+              他の人向けの残席{' '}
               <span aria-live="polite" className={`font-semibold tabular-nums ${flash ? 'price-flash' : ''}`}>
                 {performance.remaining_seats}
               </span>
               <span className="text-zinc-600"> / {performance.capacity}</span>
+              {inventoryStale ? '（確認中）' : ''}
+            </p>
+          </div>
+        ) : hasSlot ? (
+          <div>
+            <p className="text-xs font-medium tracking-wider text-zinc-500">他の人向けの残り席</p>
+            <p className={`text-3xl font-black leading-none tracking-tight tabular-nums ${flash ? 'price-flash' : ''}`}>
+              <span aria-live="polite">{performance.remaining_seats}</span>
+              <span className="ml-2 text-base font-semibold text-zinc-500">/ {performance.capacity}</span>
+            </p>
+            <p className="mt-2 text-xs text-zinc-500">
+              {soldOut
+                ? '全体は満席です。あなたの確保済み枠とは別です。'
+                : 'この数字は全体在庫です。あなたの枠は確保済みなのでここから消えません。'}
             </p>
           </div>
         ) : (
           <div>
-            <p className="text-xs font-medium tracking-wider text-zinc-500">
-              {hasSlot ? '参考の全体残席' : '残り席'}
-            </p>
+            <p className="text-xs font-medium tracking-wider text-zinc-500">残り席</p>
             <p className={`text-5xl font-black leading-none tracking-tight tabular-nums ${flash ? 'price-flash' : ''}`}>
               <span aria-live="polite">{performance.remaining_seats}</span>
               <span className="ml-2 text-lg font-semibold text-zinc-500">/ {performance.capacity}</span>
             </p>
           </div>
+        )}
+
+        <p className="text-xs text-zinc-500" role="status">
+          {connectionCopy(connectionState)} ・ 状態の確認 {relativeTime(lastSyncedAt)}
+        </p>
+
+        {notices.length > 0 && (
+          <ul className="flex flex-col gap-2" aria-live="polite">
+            {notices.map((notice) => (
+              <li key={notice.id} className="rounded-xl border border-sky-500/20 bg-sky-500/10 px-3 py-2 text-sm text-sky-100">
+                {notice.text}
+              </li>
+            ))}
+          </ul>
         )}
 
         <div className="grid grid-cols-2 gap-3">
@@ -290,19 +204,15 @@ export default function PerformanceDetailPage({ params }: Props) {
         </div>
 
         <section className="flex flex-col gap-3">
-          {!hasSlot && inQueue && (
+          {joinState === 'waiting' && (
             <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4">
-              <p className="text-sm font-bold text-amber-300">
-                {soldOut ? 'キャンセル待ちで待機中' : '待機中'}
-              </p>
-              <p className="mt-1 text-sm text-zinc-200">
-                自分の番は {visibleAdmission?.queue_entry?.position} 番目です。
-              </p>
-              <p className="mt-1 text-sm text-zinc-400">
-                {soldOut
-                  ? 'いまは満席です。枠が開けば、並んだ順に割り当てられます。'
-                  : '残席があれば枠はすぐに入ります。空席が開けば、その時点であなたに割り当てられます。'}
-              </p>
+              <p className="text-sm font-bold text-amber-300">{waitCopy.title}</p>
+              <p className="mt-1 text-sm text-zinc-200">{waitCopy.body}</p>
+              {(admission?.admitted_count ?? 0) > 0 && (
+                <p className="mt-2 text-sm text-zinc-400">
+                  他の人が枠を取れているのは先に並んだからです。あなたの待機は別です。
+                </p>
+              )}
             </div>
           )}
 
@@ -315,22 +225,29 @@ export default function PerformanceDetailPage({ params }: Props) {
             </p>
           )}
 
-          {isAuthenticated && isOpen && !inQueue && (
+          {isAuthenticated && isOpen && joinState === 'idle' && (
             <>
               <button
                 type="button"
-                onClick={handleJoin}
-                disabled={submitting}
-                className="rounded-lg bg-gradient-to-r from-violet-400 to-fuchsia-500 px-4 py-3 text-base font-extrabold text-zinc-950 shadow-lg shadow-fuchsia-500/30 transition active:scale-[.99] disabled:opacity-50"
+                onClick={() => {
+                  void handleJoin();
+                }}
+                disabled={joinDisabled}
+                aria-busy={submitting}
+                className="rounded-lg bg-gradient-to-r from-violet-400 to-fuchsia-500 px-4 py-3 text-base font-extrabold text-zinc-950 shadow-lg shadow-fuchsia-500/30 transition active:scale-[.99] disabled:pointer-events-none disabled:opacity-50"
               >
                 {submitting ? '枠を確認中…' : soldOut ? 'キャンセル待ちに並ぶ' : '待機列に並ぶ'}
               </button>
               {submitting && (
-                <p className="text-sm text-zinc-400">
-                  残席があれば、この場で枠が入ります。失敗ではありません。
-                </p>
+                <p className="text-sm text-zinc-400">残席があれば、この場で枠が入ります。二重に並ぶことはありません。</p>
               )}
             </>
+          )}
+
+          {isAuthenticated && isOpen && joinState !== 'idle' && (
+            <p className="rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-3 text-sm text-zinc-400">
+              {hasSlot ? 'このアカウントの枠は確保済みです。同じ人がもう一度並んでも増えません。' : 'すでに待機列に参加しています。'}
+            </p>
           )}
 
           {saleStatus === 'upcoming' && (

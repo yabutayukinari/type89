@@ -35,6 +35,8 @@ class PerformanceTest extends TestCase
         $performance = Performance::factory()->withCapacity(8)->create([
             'price' => 6500,
         ]);
+        $inventory = $performance->seatInventory;
+        $this->assertNotNull($inventory);
 
         $response = $this->getJson("/api/performances/{$performance->id}");
 
@@ -44,6 +46,7 @@ class PerformanceTest extends TestCase
             ->assertJsonPath('data.sale_status', 'open')
             ->assertJsonPath('data.capacity', 8)
             ->assertJsonPath('data.remaining_seats', 8)
+            ->assertJsonPath('data.inventory_updated_at', $inventory->updated_at->toIso8601String())
             ->assertJsonPath('data.show.title', $performance->show->title)
             ->assertJsonPath('data.show.venue_label', $performance->show->venue_label);
     }
