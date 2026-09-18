@@ -98,7 +98,7 @@ Dependabot の PR は自動ではマージしません。人が内容を確か�
 
 npm（`frontend/package-lock.json`）と GitHub Actions の依存はこのチェックの対象外です（npm 対応は第2段で追加予定）。当面は Dependabot の待機日数（cooldown）・`npm audit`・OSV-Scanner・人によるレビューでリスクを抑えます。
 
-Dependabot の待機日数（`.github/dependabot.yml` の `cooldown`）は、patch・minor がともに 7 日、major は 30 日です。
+Dependabot の待機日数（`.github/dependabot.yml` の `cooldown`）は、semver の種類によらず一律 7 日です。cooldown の目的はサプライチェーン攻撃への備え（汚染されたバージョンが検知・取り下げられるまで待つ）であり、検知までのタイムラグは semver の種類に左右されないため、major だけを長くする扱いはやめました。
 
 ## Security
 
