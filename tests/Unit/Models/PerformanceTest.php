@@ -6,6 +6,8 @@ namespace Tests\Unit\Models;
 
 use App\Enums\SaleStatus;
 use App\Models\Performance;
+use App\Models\PurchaseSlot;
+use App\Models\QueueEntry;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
 use Tests\TestCase;
@@ -49,5 +51,22 @@ class PerformanceTest extends TestCase
         $this->assertNotNull($inventory);
         $this->assertSame(5, $inventory->capacity);
         $this->assertSame(3, $inventory->remaining_seats);
+    }
+
+    public function test_relations_expose_queue_entries_and_purchase_slots(): void
+    {
+        $performance = Performance::factory()->create();
+        $entry = QueueEntry::factory()->admitted()->create([
+            'performance_id' => $performance->id,
+        ]);
+        $slot = PurchaseSlot::factory()->create([
+            'performance_id' => $performance->id,
+            'user_id' => $entry->user_id,
+            'queue_entry_id' => $entry->id,
+        ]);
+
+        $this->assertTrue($performance->queueEntries->contains($entry));
+        $this->assertTrue($performance->purchaseSlots->contains($slot));
+        $this->assertTrue($performance->show->performances->contains($performance));
     }
 }

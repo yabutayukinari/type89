@@ -33,4 +33,18 @@ class PurchaseSlotTest extends TestCase
             'assigned_at' => Carbon::now(),
         ]);
     }
+
+    public function test_belongs_to_performance_user_and_queue_entry(): void
+    {
+        $entry = QueueEntry::factory()->admitted()->create();
+        $slot = PurchaseSlot::factory()->create([
+            'performance_id' => $entry->performance_id,
+            'user_id' => $entry->user_id,
+            'queue_entry_id' => $entry->id,
+        ]);
+
+        $this->assertTrue($slot->performance->is($entry->performance));
+        $this->assertTrue($slot->user->is($entry->user));
+        $this->assertTrue($slot->queueEntry->is($entry));
+    }
 }
