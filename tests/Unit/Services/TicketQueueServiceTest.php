@@ -86,4 +86,31 @@ class TicketQueueServiceTest extends TestCase
         $this->assertTrue($admission->purchaseSlot->user->is($user));
         $this->assertTrue($admission->purchaseSlot->queueEntry->is($admission->queueEntry));
     }
+
+    public function test_join_admits_a_waiting_entry_that_already_has_a_slot(): void
+    {
+        $performance = Performance::factory()->withCapacity(2)->create();
+        $user = User::factory()->create();
+        $entry = QueueEntry::factory()->create([
+            'performance_id' => $performance->id,
+            'user_id' => $user->id,
+            'status' => QueueEntryStatus::Waiting,
+            'position' => 1,
+        ]);
+        $slot = PurchaseSlot::factory()->create([
+            'performance_id' => $performance->id,
+            'user_id' => $user->id,
+            'queue_entry_id' => $entry->id,
+        ]);
+
+        $admission = app(TicketQueueService::class)->join($performance, $user);
+
+        $this->assertSame(QueueEntryStatus::Admitted, $entry->fresh()?->status);
+        $this->assertTrue($admission->purchaseSlot?->is($slot));
+        $this->assertSame(
+            2,
+            $performance->seatInventory()->firstOrFail()->remaining_seats,
+        );
+        $this->assertSame([], $admission->newlyAssignedSlots);
+    }
 }
