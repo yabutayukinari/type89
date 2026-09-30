@@ -75,10 +75,15 @@ class CloseEndedAuctionsTest extends TestCase
             'current_winner_user_id' => null,
         ]);
 
-        $this->assertSame(0, Artisan::call('auctions:close'));
+        // 終了コードを別々の変数に受けてからまとめて検証する。同じ式を続けて
+        // assertSame(0, ...) にかけると、PHPStan が 2 回目を絞り込み済みの型と見なす
+        $firstExitCode = Artisan::call('auctions:close');
         $firstSettledAt = $auction->refresh()->settled_at?->toIso8601String();
 
-        $this->assertSame(0, Artisan::call('auctions:close'));
+        $secondExitCode = Artisan::call('auctions:close');
+
+        $this->assertSame(0, $firstExitCode);
+        $this->assertSame(0, $secondExitCode);
 
         // 2 回目の実行では再確定・再通知されない
         Notification::assertSentToTimes($seller, AuctionSettled::class, 1);
