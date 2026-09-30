@@ -76,7 +76,6 @@ Tests run against the dedicated `mysql.test` Sail container (MySQL 8 on tmpfs fo
 - PHPUnit 12 for unit and feature tests
 - Dedicated `mysql.test` Sail container (MySQL 8 on tmpfs) for test isolation
 - Base test case in `tests/TestCase.php` with Laravel testing utilities
-- Laravel test assertions included via `jasonmccreary/laravel-test-assertions`
 
 ### Key Technology Stack
 - **Framework:** Laravel 13
@@ -84,7 +83,6 @@ Tests run against the dedicated `mysql.test` Sail container (MySQL 8 on tmpfs fo
 - **Authentication:** Laravel Sanctum 4 (SPA / API token authentication)
 - **Realtime:** Laravel Reverb 1 (WebSocket broadcasting)
 - **Database:** MySQL (dev) / dedicated MySQL container (test)
-- **Dependencies:** Guzzle HTTP client
 - **Frontend:** Next.js (separate `frontend/` directory)
 
 ### Admin and User Management
